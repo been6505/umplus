@@ -84,29 +84,76 @@ function startSharing(){
   LIVE.watch=navigator.geolocation.watchPosition(onPos,err=>{
     if(err.code===1){stopSharing(true);toast({title:'ไม่ได้รับอนุญาตให้ใช้ตำแหน่ง',body:'เปิดสิทธิ์ตำแหน่งของเบราว์เซอร์ แล้วลองใหม่',tone:'warn'})}
   },{enableHighAccuracy:true,maximumAge:15000,timeout:30000});
+  trkLog('info','เริ่มติดตาม · '+TRK_FREQ[trkFreq()]);wakeOn();
   renderShareChip();refreshLiveControls();
 }
 async function stopSharing(silent){
   if(LIVE.watch!=null){navigator.geolocation.clearWatch(LIVE.watch);LIVE.watch=null}
-  store.set('uh_sharing','');LIVE.lastPos=null;LIVE.lastSent=0;
+  store.set('uh_sharing','');LIVE.lastPos=null;LIVE.lastSent=0;LIVE.pending=null;wakeOff();trkLog('info','หยุดติดตาม');
   renderShareChip();refreshLiveControls();
   if(!silent)try{await apiPing({stop:true})}catch(e){}
   loadTeams();
 }
-async function onPos(pos){
-  const p={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:Math.round(pos.coords.accuracy||0)};
-  const now=Date.now(),since=now-LIVE.lastSent;
-  const moved=LIVE.lastPos?distM(LIVE.lastPos,p):Infinity;
-  if(LIVE.sending||(LIVE.lastSent&&(since<SEND_MIN_MS||(moved<SEND_MIN_M&&since<SEND_MAX_MS))))return;
-  LIVE.sending=true;
-  try{
-    const r=await apiPing({lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6),accuracy:p.accuracy});
-    if(r.ok){LIVE.lastSent=now;LIVE.lastPos=p;renderShareChip()}
-    else if(r.error==='not_volunteer'){stopSharing(true)}
-  }catch(e){}finally{LIVE.sending=false}
+/* ---------- ตัวติดตามแบบ Traccar: รหัสอุปกรณ์, ความถี่, บันทึกสถานะ, ส่งซ้ำเมื่อออนไลน์, แบตเตอรี่, กันจอดับ ---------- */
+function devId(){let d=store.get('uh_dev_id','');if(!d){d=String(10000000+Math.floor(Math.random()*90000000));store.set('uh_dev_id',d)}return d}
+const TRK_FREQ={30:'ทุก 30 วินาที',60:'ทุก 1 นาที',120:'ทุก 2 นาที',300:'ทุก 5 นาที'};
+const trkFreq=()=>{const f=Number(store.get('uh_trk_freq',''))||30;return TRK_FREQ[f]?f:30};
+const keepAwakeOn=()=>store.get('uh_trk_awake','1')==='1';
+LIVE.log=[];LIVE.batt=null;
+function trkLog(kind,text){LIVE.log.unshift({t:Date.now(),kind,text});LIVE.log.length=Math.min(LIVE.log.length,30);renderTrkLog()}
+function renderTrkLog(){const el=document.getElementById('trk-log');if(!el)return;
+  el.replaceChildren(...(LIVE.log.length?LIVE.log:[{t:Date.now(),kind:'info',text:'ยังไม่มีข้อมูล'}]).map(x=>{const li=document.createElement('li');li.className='trk-'+x.kind;
+    const tm=document.createElement('time');tm.textContent=new Date(x.t).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});li.append(tm,' '+x.text);return li}))}
+async function readBatt(){try{if(navigator.getBattery){const b=await navigator.getBattery();LIVE.batt=Math.round(b.level*100);return LIVE.batt}}catch(e){}return null}
+async function sendPos(p,why){
+  const batt=await readBatt();
+  const body={lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6),accuracy:p.accuracy,deviceId:devId()};if(batt!=null)body.batt=batt;if(p.speed!=null)body.speed=p.speed;
+  const info=`±${p.accuracy} ม.${batt!=null?' · แบต '+batt+'%':''}`;
+  try{const r=await apiPing(body);
+    if(r&&r.ok){LIVE.lastSent=Date.now();LIVE.lastPos=p;LIVE.pending=null;trkLog('ok',(why||'ส่งตำแหน่ง')+' · '+info);renderShareChip();renderTrkHead();return true}
+    if(r&&r.error==='not_volunteer'){stopSharing(true);trkLog('err','รหัสทีมหมดอายุ หยุดติดตาม');return false}
+    throw new Error(r&&r.error||'error');
+  }catch(e){LIVE.pending=p;trkLog('wait',(navigator.onLine===false?'ออฟไลน์ ':'ส่งไม่สำเร็จ ')+'· จะส่งใหม่อัตโนมัติ');renderTrkHead();return false}
 }
+async function onPos(pos){
+  const p={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:Math.round(pos.coords.accuracy||0),speed:pos.coords.speed!=null&&isFinite(pos.coords.speed)?Math.round(pos.coords.speed*3.6):null};
+  const now=Date.now(),since=now-LIVE.lastSent,minMs=trkFreq()*1000;
+  const moved=LIVE.lastPos?distM(LIVE.lastPos,p):Infinity;
+  LIVE.cur=p;
+  if(LIVE.sending||(LIVE.lastSent&&(since<minMs||(moved<SEND_MIN_M&&since<Math.max(SEND_MAX_MS,minMs)))))return;
+  LIVE.sending=true;try{await sendPos(p)}finally{LIVE.sending=false}
+}
+/* ส่งตำแหน่งทันที 1 ครั้ง (ปุ่ม "ส่งตำแหน่ง") */
+function sendNow(why){
+  return new Promise(res=>{if(!navigator.geolocation){toast({title:'อุปกรณ์นี้ไม่รองรับตำแหน่ง',tone:'warn'});return res(null)}
+    navigator.geolocation.getCurrentPosition(async pos=>{const p={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:Math.round(pos.coords.accuracy||0)};LIVE.cur=p;
+      LIVE.sending=true;try{await sendPos(p,why)}finally{LIVE.sending=false}res(p)},
+      err=>{trkLog('err',err.code===1?'ไม่ได้รับอนุญาตให้ใช้ตำแหน่ง':'หาตำแหน่งไม่ได้');toast({title:err.code===1?'ไม่ได้รับอนุญาตให้ใช้ตำแหน่ง':'หาตำแหน่งไม่ได้ ลองใหม่',tone:'warn'});res(null)},
+      {enableHighAccuracy:true,maximumAge:5000,timeout:20000})})}
+/* SOS: แจ้งเคสวิกฤตที่ตำแหน่งทีม (เข้าคิวหลังบ้านทันที) + ส่งตำแหน่ง */
+async function sendSOS(){
+  const team=store.get('uh_team','');
+  if(!confirm('ส่ง SOS ขอความช่วยเหลือด่วนสำหรับทีม "'+(team||'อาสา')+'" ?'))return;
+  trkLog('sos','กำลังส่ง SOS…');
+  /* ไม่รอ GPS นานเกิน 6 วินาที — ใช้ตำแหน่งล่าสุดที่มีแทน */
+  const p=await Promise.race([sendNow('SOS'),new Promise(r=>setTimeout(()=>r(null),6000))])||LIVE.cur||LIVE.lastPos;
+  try{const r=await apiCreate({needs:['ทีมอาสาขอความช่วยเหลือ'],urgencyLabel:'ด่วนมาก · เสี่ยงต่อชีวิต',people:1,households:1,level:'',vulnerable:[],
+      address:'ตำแหน่งทีมอาสา'+(p?` (±${p.accuracy} ม.)`:''),lat:p?+p.lat.toFixed(6):'',lng:p?+p.lng.toFixed(6):'',name:'ทีม '+(team||'อาสา'),phone:store.get('uh_trk_phone',''),
+      details:`[SOS จากตัวติดตามทีม] ทีม ${team||'-'} · อุปกรณ์ ${devId()}${LIVE.batt!=null?' · แบต '+LIVE.batt+'%':''}`,website:''});
+    if(r&&r.ok){trkLog('sos','ส่ง SOS แล้ว'+(r.id?' · เคส #'+r.id:''));toast({title:'ส่ง SOS แล้ว',body:'แอดมินเห็นเคสวิกฤตพร้อมตำแหน่งของทีมแล้ว',tone:'danger',key:'sos'})}
+    else throw new Error(r&&r.error||'');
+  }catch(e){trkLog('err','ส่ง SOS ไม่สำเร็จ');toast({title:'ส่ง SOS ไม่สำเร็จ',body:'โทร 1669 หรือ 191 ทันที',tone:'danger',key:'sos',timeout:0})}
+}
+/* กันจอดับระหว่างติดตาม (Wake Lock) — เว็บส่งตำแหน่งได้เฉพาะตอนจอติด */
+async function wakeOn(){if(!isSharing()||!keepAwakeOn()||document.hidden||LIVE.wake||!('wakeLock' in navigator))return;
+  try{LIVE.wake=await navigator.wakeLock.request('screen');LIVE.wake.addEventListener('release',()=>{LIVE.wake=null;renderTrkHead()});renderTrkHead()}catch(e){}}
+function wakeOff(){try{LIVE.wake&&LIVE.wake.release()}catch(e){}LIVE.wake=null}
+/* กลับมาที่หน้านี้ / กลับมาออนไลน์ → ส่งทันที + ขอกันจอดับใหม่ */
+document.addEventListener('visibilitychange',()=>{if(document.hidden||!isSharing())return;wakeOn();if(Date.now()-LIVE.lastSent>15000||LIVE.pending)sendNow('กลับมาที่หน้าเว็บ')});
+window.addEventListener('online',()=>{if(isSharing()&&LIVE.pending){trkLog('info','กลับมาออนไลน์');sendPos(LIVE.pending,'ส่งตำแหน่งที่ค้าง')}});
+setInterval(()=>{if(isSharing()&&LIVE.pending&&!LIVE.sending&&navigator.onLine!==false)sendPos(LIVE.pending,'ส่งใหม่')},20000);
 /* ส่งซ้ำเป็นระยะแม้ไม่ได้ขยับ (ให้ผู้แจ้งเห็นว่ายังออนไลน์) */
-setInterval(()=>{if(isSharing()&&LIVE.lastPos&&Date.now()-LIVE.lastSent>=SEND_MAX_MS)onPos({coords:{latitude:LIVE.lastPos.lat,longitude:LIVE.lastPos.lng,accuracy:LIVE.lastPos.accuracy}})},30000);
+setInterval(()=>{if(isSharing()&&LIVE.lastPos&&Date.now()-LIVE.lastSent>=Math.max(SEND_MAX_MS,trkFreq()*1000))onPos({coords:{latitude:LIVE.lastPos.lat,longitude:LIVE.lastPos.lng,accuracy:LIVE.lastPos.accuracy}})},30000);
 
 /* ไม่แสดงแถบลอย "แชร์ตำแหน่งทีม" แล้ว (ควบคุมการแชร์ได้ในแผงทีมอาสา) — แสดงแค่จุดเขียวเล็ก ๆ ที่สวิตช์ทีมอาสา */
 function renderShareChip(){
@@ -122,16 +169,46 @@ function liveControls(){
 function refreshLiveControls(){const box=document.getElementById('live-box');if(box)fillLiveControls(box)}
 function fillLiveControls(box){
   box.replaceChildren();
-  const h=document.createElement('strong');h.textContent='ตำแหน่งทีม (เรียลไทม์)';
+  const h=document.createElement('strong');h.textContent='ตัวติดตามทีม';
   const team=document.createElement('input');team.className='team-input';team.placeholder='ชื่อทีม / อาสา';team.value=store.get('uh_team','');team.setAttribute('aria-label','ชื่อทีม');
   team.onchange=()=>{store.set('uh_team',team.value.trim());renderVolunteerBar();if(typeof ME!=='undefined'&&ME.marker&&ME.marker.setIcon)ME.marker.setIcon(meIcon())};
-  const btn=document.createElement('button');btn.type='button';
-  if(isSharing()){btn.className='secondary-button';btn.textContent='หยุดแชร์ตำแหน่ง';btn.onclick=()=>stopSharing()}
-  else{btn.className='solid-button';btn.textContent='📍 เริ่มแชร์ตำแหน่งทีม';btn.onclick=()=>{const t=team.value.trim();if(!t){team.focus();team.placeholder='ใส่ชื่อทีมก่อน';return}store.set('uh_team',t);startSharing()}}
-  box.append(h,team,btn);
+  const needTeam=()=>{const t=team.value.trim();if(!t){team.focus();team.placeholder='ใส่ชื่อทีมก่อน';toast({title:'ใส่ชื่อทีมก่อน',tone:'warn'});return false}store.set('uh_team',t);return true};
+  const card=document.createElement('div');card.className='trk';
+  /* หัว: รหัสอุปกรณ์ + สถานะล่าสุด */
+  const head=document.createElement('div');head.className='trk-head';head.id='trk-head';
+  /* สวิตช์ติดตามอย่างต่อเนื่อง */
+  const sw=document.createElement('label');sw.className='trk-switch';
+  const cb=document.createElement('input');cb.type='checkbox';cb.role='switch';cb.checked=isSharing();
+  cb.onchange=()=>{if(cb.checked){if(!needTeam()){cb.checked=false;return}startSharing();if(!isSharing())cb.checked=false}else stopSharing()};
+  const sl=document.createElement('span');sl.textContent='ติดตามอย่างต่อเนื่อง';const knob=document.createElement('i');sw.append(sl,cb,knob);
+  /* ปุ่ม */
+  const row=document.createElement('div');row.className='trk-btns';
+  const bSend=document.createElement('button');bSend.type='button';bSend.className='secondary-button';bSend.textContent='ส่งตำแหน่ง';bSend.onclick=async()=>{if(!needTeam())return;bSend.disabled=true;await sendNow('ส่งตำแหน่ง (กดเอง)');bSend.disabled=false};
+  const bSos=document.createElement('button');bSos.type='button';bSos.className='trk-sosbtn';bSos.textContent='ส่ง SOS';bSos.onclick=()=>{if(needTeam())sendSOS()};
+  const bLog=document.createElement('button');bLog.type='button';bLog.className='secondary-button';bLog.textContent='แสดงสถานะ';
+  const log=document.createElement('ol');log.className='trk-log';log.id='trk-log';log.hidden=!LIVE.showLog;
+  bLog.onclick=()=>{LIVE.showLog=!LIVE.showLog;log.hidden=!LIVE.showLog;renderTrkLog()};
+  row.append(bSend,bSos,bLog);
+  /* ตั้งค่า */
+  const set=document.createElement('details');set.className='trk-set';
+  set.innerHTML='<summary>การตั้งค่า</summary>';
+  const fq=document.createElement('label');fq.className='trk-opt';fq.append('ความถี่ในการส่ง');
+  const sel=document.createElement('select');Object.entries(TRK_FREQ).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;if(Number(k)===trkFreq())o.selected=true;sel.append(o)});
+  sel.onchange=()=>{store.set('uh_trk_freq',sel.value);trkLog('info','ตั้งความถี่ '+TRK_FREQ[sel.value])};fq.append(sel);
+  const aw=document.createElement('label');aw.className='trk-opt';const awc=document.createElement('input');awc.type='checkbox';awc.checked=keepAwakeOn();
+  awc.onchange=()=>{store.set('uh_trk_awake',awc.checked?'1':'0');if(awc.checked)wakeOn();else wakeOff();renderTrkHead()};aw.append(awc,' กันจอดับระหว่างติดตาม');
+  const ph=document.createElement('label');ph.className='trk-opt';ph.append('เบอร์ติดต่อทีม (ใช้ตอนส่ง SOS)');const phi=document.createElement('input');phi.type='tel';phi.inputMode='tel';phi.className='team-input';phi.value=store.get('uh_trk_phone','');phi.onchange=()=>store.set('uh_trk_phone',phi.value.trim());ph.append(phi);
+  const note=document.createElement('p');note.className='trk-note';note.textContent='เว็บส่งตำแหน่งได้เมื่อเปิดหน้านี้ค้างไว้และจอติด (เปิด "กันจอดับ" และเสียบที่ชาร์จจะส่งได้ทั้งวัน) ถ้าต้องส่งตอนล็อกจอ ใช้ "แชร์ผ่าน Google Maps" ด้านล่างเพิ่ม';
+  set.append(fq,aw,ph,note);
+  card.append(head,sw,row,log,set);
+  box.append(h,team,card);
+  renderTrkHead();renderTrkLog();
   box.append(gmBox());
   const nb=notifyButton('🔔 เปิดแจ้งเตือนเคสใหม่');if(nb)box.append(nb);
 }
+function renderTrkHead(){const el=document.getElementById('trk-head');if(!el)return;
+  const st=!isSharing()?['off','ปิดอยู่']:LIVE.pending?['wait','รอส่ง · '+(navigator.onLine===false?'ออฟไลน์':'ลองใหม่อัตโนมัติ')]:LIVE.lastSent?['on','ส่งล่าสุด '+new Date(LIVE.lastSent).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})]:['on','กำลังหาตำแหน่ง…'];
+  el.innerHTML=`<div><small>รหัสอุปกรณ์</small><b>${escH(devId())}</b></div><div class="trk-st trk-st-${st[0]}"><span></span>${escH(st[1])}${isSharing()&&LIVE.wake?' · 🔆 กันจอดับ':''}${LIVE.batt!=null?' · 🔋'+LIVE.batt+'%':''}</div>`}
 
 /* ============================================================
    ตำแหน่งสดผ่าน Google Maps (ส่งต่อแม้ล็อกจอ) — เชื่อมลิงก์ให้ทีมอัตโนมัติ
