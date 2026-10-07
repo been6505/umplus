@@ -30,4 +30,4 @@ Settings → Pages → Source: *Deploy from a branch* → เลือก branch
 ## หมายเหตุ
 
 - ทุกหน้าเรียก Apps Script ตัวเดียวกัน (`API_URL` ใน `script.js`, `admin.js`, `admin/common.js`, `admin/dashboard/dashboard.js`) ถ้าเปลี่ยน URL ต้องแก้ทั้ง 4 ไฟล์
-- เมื่อแก้ไฟล์หน้าเว็บ ให้เพิ่มเลขใน `version.json` และ `CACHE` ใน `sw.js` เพื่อให้มือถือที่เปิดค้างไว้โหลดเวอร์ชันใหม่
+- เมื่อแก้ไฟล์หน้าเว็บ ให้เพิ่มเลขใน `version.json`, `APP_VERSION` ใน `index.html` (ต้องตรงกับ `version.json` ไม่งั้นหน้าเว็บจะรีโหลดตัวเองวนไป) และ `CACHE` ใน `sw.js`
