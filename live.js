@@ -129,15 +129,76 @@ function fillLiveControls(box){
   if(isSharing()){btn.className='secondary-button';btn.textContent='หยุดแชร์ตำแหน่ง';btn.onclick=()=>stopSharing()}
   else{btn.className='solid-button';btn.textContent='📍 เริ่มแชร์ตำแหน่งทีม';btn.onclick=()=>{const t=team.value.trim();if(!t){team.focus();team.placeholder='ใส่ชื่อทีมก่อน';return}store.set('uh_team',t);startSharing()}}
   box.append(h,team,btn);
-  /* เว็บส่งตำแหน่งได้เฉพาะตอนเปิดหน้าค้าง → แนะนำให้แชร์ตำแหน่งสดจาก Google Maps ซึ่งส่งต่อแม้ล็อกจอ */
-  const gm=document.createElement('details');gm.className='gm-share';
-  gm.innerHTML=`<summary>📍 แชร์ผ่าน Google Maps (ส่งต่อแม้ล็อกจอ)</summary>
-    <ol><li>แตะ <b>เปิด Google Maps</b> → รูปโปรไฟล์ → <b>การแชร์ตำแหน่ง</b> → <b>แชร์ตำแหน่ง</b></li>
-    <li>ตั้งเวลา <b>จนกว่าคุณจะปิด</b> → <b>คัดลอกไปยังคลิปบอร์ด</b></li>
-    <li>วางลิงก์ที่ทีมของคุณในหน้า <a href="./admin/teams/" target="_blank" rel="noopener">จัดทีม</a> (หรือส่ง LINE ให้แอดมิน)</li></ol>
-    <a class="secondary-button" href="https://www.google.com/maps" target="_blank" rel="noopener">เปิด Google Maps</a>`;
-  box.append(gm);
+  box.append(gmBox());
   const nb=notifyButton('🔔 เปิดแจ้งเตือนเคสใหม่');if(nb)box.append(nb);
+}
+
+/* ============================================================
+   ตำแหน่งสดผ่าน Google Maps (ส่งต่อแม้ล็อกจอ) — เชื่อมลิงก์ให้ทีมอัตโนมัติ
+   กด "แชร์ผ่าน Google Maps" → แชร์ตำแหน่ง/คัดลอกลิงก์ในแอป → กลับมาหน้านี้
+   ระบบอ่านลิงก์จากคลิปบอร์ดแล้วบันทึกเข้าทีมเอง (ถ้าเบราว์เซอร์ไม่ให้อ่านเอง จะขึ้นปุ่ม "วางลิงก์" กดครั้งเดียว)
+   ลิงก์เก็บต่อท้ายหมายเหตุของทีม (📍<url>) เหมือนหน้าจัดทีม
+   ============================================================ */
+const GM_RE=/https:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.(?:com|co\.th)\/maps|maps\.google\.(?:com|co\.th))[^\s<>"']*/i;
+const GM_WAIT_MS=20*60*1000;
+const gmClean=n=>String(n||'').replace(GM_RE,'').replace(/\s*📍\s*/g,' ').trim();
+const tnm=s=>String(s||'').replace(/^'/,'').trim();
+async function gmSave(url){
+  const key=store.get('uh_vol_key',''),team=store.get('uh_team','');
+  if(!key||!team)throw new Error('no_team');
+  const r=await (await fetch(API_URL+'?'+new URLSearchParams({action:'roster',key,t:Date.now()}),{cache:'no-store'})).json();
+  if(!r||!r.ok)throw new Error(r&&r.error||'roster');
+  const cur=(r.roster||[]).find(x=>tnm(x.name)===tnm(team))||{name:team,status:'out'};
+  const note=[gmClean(cur.note),url?'📍'+url:''].filter(Boolean).join(' ');
+  const s=await apiPost({action:'roster_save',key,team:{...cur,id:cur.id||'',gmaps:url,note},by:team});
+  if(!s||!s.ok)throw new Error(s&&s.error||'save');
+  store.set('uh_gmaps',url);LIVE.gmWait=0;refreshLiveControls();
+}
+async function gmLink(text,quiet){
+  const m=String(text||'').match(GM_RE);
+  if(!m){if(!quiet)toast({title:'ไม่พบลิงก์ Google Maps',body:'ในแอป Google Maps กด "แชร์ตำแหน่ง" → "คัดลอกไปยังคลิปบอร์ด" แล้วกลับมากดวางอีกครั้ง',tone:'warn'});return false}
+  if(m[0]===store.get('uh_gmaps','')){LIVE.gmWait=0;if(!quiet)toast({title:'เชื่อมลิงก์นี้ไว้แล้ว',tone:'ok',timeout:4000});return true}
+  try{await gmSave(m[0]);toast({title:'✓ เชื่อมตำแหน่ง Google Maps แล้ว',body:'แอดมินเห็นตำแหน่งสดของทีม '+store.get('uh_team','')+' ในหน้าจัดทีมแล้ว',tone:'ok',key:'gm'});return true}
+  catch(e){toast({title:'บันทึกลิงก์ไม่สำเร็จ',body:e.message==='no_team'?'ใส่ชื่อทีมก่อน':'ลองใหม่อีกครั้ง',tone:'warn',key:'gm'});return false}
+}
+async function gmFromClipboard(quiet){
+  try{const t=await navigator.clipboard.readText();return await gmLink(t,quiet)}catch(e){return null}
+}
+function gmOpen(){
+  const team=store.get('uh_team','');
+  if(!team){toast({title:'ใส่ชื่อทีมก่อน',tone:'warn'});return}
+  LIVE.gmWait=Date.now();
+  window.open('https://www.google.com/maps','_blank','noopener');
+  toast({title:'แชร์ตำแหน่งใน Google Maps',body:'รูปโปรไฟล์ → การแชร์ตำแหน่ง → แชร์ตำแหน่ง → "จนกว่าคุณจะปิด" → คัดลอกไปยังคลิปบอร์ด แล้วกลับมาหน้านี้ ระบบจะเชื่อมลิงก์ให้เอง',tone:'info',timeout:0,key:'gm'});
+}
+/* กลับมาจาก Google Maps → ลองอ่านคลิปบอร์ดเอง ถ้าเบราว์เซอร์ไม่อนุญาต ให้กดปุ่มเดียว */
+async function gmOnReturn(){
+  if(document.hidden||LIVE.gmBusy||!LIVE.gmWait||Date.now()-LIVE.gmWait>GM_WAIT_MS)return;
+  LIVE.gmBusy=true;let ok;try{ok=await gmFromClipboard(true)}finally{LIVE.gmBusy=false}
+  if(ok||!LIVE.gmWait)return;
+  toast({title:'คัดลอกลิงก์จาก Google Maps แล้ว?',body:'กดปุ่มเพื่อเชื่อมตำแหน่งสดเข้าทีมของคุณ',tone:'info',timeout:0,key:'gm',actionText:'📋 วางลิงก์',
+    onAction:async()=>{const r=await gmFromClipboard(false);if(r===null){const box=document.querySelector('.gm-paste');if(box){box.hidden=false;box.focus()}toast({title:'วางลิงก์ในช่องด้านล่าง',body:'เบราว์เซอร์นี้ไม่ให้อ่านคลิปบอร์ด กดค้างในช่องแล้วเลือก "วาง"',tone:'warn',key:'gm'})}}});
+}
+document.addEventListener('visibilitychange',gmOnReturn);
+window.addEventListener('focus',gmOnReturn);
+function gmBox(){
+  const wrap=document.createElement('div');wrap.className='gm-share';
+  const linked=store.get('uh_gmaps','');
+  const h=document.createElement('div');h.className='gm-h';
+  h.innerHTML=linked?'<b>✓ ตำแหน่งสด Google Maps เชื่อมแล้ว</b><small>ส่งต่อแม้ล็อกจอ · แอดมินเปิดดูได้จากหน้าจัดทีม</small>':'<b>📍 ตำแหน่งสดผ่าน Google Maps</b><small>ส่งต่อแม้ล็อกจอหรือสลับแอป</small>';
+  const go=document.createElement('button');go.type='button';go.className=linked?'secondary-button':'solid-button';
+  go.textContent=linked?'เปลี่ยนลิงก์ (แชร์ใหม่ใน Google Maps)':'แชร์ผ่าน Google Maps';go.onclick=gmOpen;
+  const paste=document.createElement('input');paste.className='team-input gm-paste';paste.inputMode='url';paste.placeholder='หรือวางลิงก์ maps.app.goo.gl ที่นี่';paste.setAttribute('aria-label','ลิงก์แชร์ตำแหน่ง Google Maps');
+  paste.addEventListener('input',()=>{if(GM_RE.test(paste.value))gmLink(paste.value)});
+  wrap.append(h,go,paste);
+  if(linked){
+    const row=document.createElement('div');row.className='gm-row';
+    const view=document.createElement('a');view.href=linked;view.target='_blank';view.rel='noopener';view.textContent='ดูลิงก์ที่เชื่อมไว้';
+    const off=document.createElement('button');off.type='button';off.className='text-button';off.textContent='ยกเลิกการเชื่อม';
+    off.onclick=async()=>{try{await gmSave('');toast({title:'ยกเลิกการเชื่อมแล้ว',body:'อย่าลืมกดหยุดแชร์ในแอป Google Maps ด้วย',tone:'info'})}catch(e){toast({title:'ไม่สำเร็จ ลองใหม่',tone:'warn'})}};
+    row.append(view,off);wrap.append(row);
+  }
+  return wrap;
 }
 
 /* ตำแหน่งทีมบนแผนที่ (เฉพาะอาสา) */
