@@ -126,3 +126,9 @@ button,input,select{font:inherit}button{cursor:pointer}[hidden]{display:none!imp
 @media(max-width:900px){.tbl td.vr-cell{grid-column:2/3;text-align:right}.tbl td.vr-cell .vr-score{display:inline;margin-left:4px}.vr-bars div{grid-template-columns:110px 1fr 44px}}
 /* แท็บหลังบ้าน 4 หน้า: มือถือเลื่อนด้านข้างได้ */
 .tabs{overflow-x:auto;scrollbar-width:none;min-width:0;flex:1 1 auto}.tabs::-webkit-scrollbar{display:none}.tabs a{flex:none}
+
+/* องค์กรอื่นรับแล้ว */
+.cov{display:inline-block;background:#efe7fb;color:#5b2d91;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;margin:0 4px 4px 0;white-space:nowrap}
+.cov-box{background:#f6f0fd;border:1px solid #dccbf3;border-radius:14px;padding:12px 14px;margin-top:14px;color:#3d1f63}
+.cov-box p{margin:4px 0}.cov-box a{color:#5b2d91;font-weight:600}.cov-box ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:14px}.cov-box small{display:block;color:#6d5a86;font-size:12.5px}
+@media(max-width:900px){.tbl td.vr-cell{white-space:normal;min-width:0;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:4px}.tbl td.vr-cell .cov{margin:0}}

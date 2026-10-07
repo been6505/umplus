@@ -9,9 +9,10 @@ async function loadAll(){$('#sync').textContent='กำลังโหลด…'
 $('#refresh').addEventListener('click',loadAll);
 setInterval(()=>{if(ADM.key&&!document.hidden&&$('#drawer').hidden)loadAll()},60000);
 
+function expTag(i){if(!i.expiry)return '';const d=Math.ceil((Date.parse(i.expiry)-Date.now())/864e5);if(isNaN(d))return '';const t=new Date(i.expiry).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});return d<0?` · <span class="needtag">หมดอายุแล้ว (${t})</span>`:d<=30?` · <span class="warn">หมดอายุใน ${d} วัน</span>`:` · หมดอายุ ${t}`}
 const low=i=>i.min!==''&&i.min!=null&&Number(i.qty)<=Number(i.min);
 function filtered(){const q=$('#q').value.trim().toLowerCase();
-  return S.items.filter(i=>{if(q&&!(i.name+' '+i.category+' '+i.note).toLowerCase().includes(q))return false;
+  return S.items.filter(i=>{if(q&&!(i.name+' '+i.category+' '+i.note+' '+(i.location||'')).toLowerCase().includes(q))return false;
     if(S.cat==='low')return low(i)||Number(i.qty)<=0;if(S.cat==='need')return i.needed;if(S.cat!=='all'&&i.category!==S.cat)return false;return true})}
 function render(){
   $('#sync').textContent=S.loaded?'อัปเดต '+new Date(S.loaded).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'';
@@ -22,7 +23,7 @@ function render(){
   $('#cat').innerHTML=cats.map(([k,t])=>`<button data-cat="${esc(k)}" aria-selected="${S.cat===k}">${esc(t)}</button>`).join('');
   const L=filtered();
   $('#items').innerHTML=L.length?`<table class="tbl stk"><thead><tr><th>รายการ</th><th class="r">คงเหลือ</th><th></th></tr></thead><tbody>${L.map(i=>{const q=Number(i.qty)||0,cls=q<=0?'zero':low(i)?'low':'';
-    return `<tr class="${cls}" data-id="${esc(i.id)}"><td><b>${esc(i.name)}</b><small>${esc(i.category||'')}${i.min!==''&&i.min!=null?` · ขั้นต่ำ ${nf(i.min)}`:''}${i.needed?' · <span class="needtag">ต้องการ</span>':''}</small></td>
+    return `<tr class="${cls}" data-id="${esc(i.id)}"><td><b>${esc(i.name)}</b><small>${esc(i.category||'')}${i.min!==''&&i.min!=null?` · ขั้นต่ำ ${nf(i.min)}`:''}${i.needed?' · <span class="needtag">ต้องการ</span>':''}${i.location?' · 📍 '+esc(i.location):''}${expTag(i)}</small></td>
       <td class="r qty">${nf(q)} <span class="unit">${esc(i.unit||'')}</span>${q<=0?'<small class="warn">หมด</small>':low(i)?'<small class="warn">ใกล้หมด</small>':''}</td>
       <td class="act"><button class="btn primary sm" data-mv="in" data-item="${esc(i.id)}">+ รับเข้า</button><button class="btn ghost sm" data-mv="out" data-item="${esc(i.id)}">− จ่ายออก</button><button class="btn ghost sm" data-ed="${esc(i.id)}" aria-label="แก้ไข ${esc(i.name)}">✎</button></td></tr>`}).join('')}</tbody></table>`:'<p class="empty">ไม่มีรายการ</p>';
   const need=I.filter(i=>i.needed||Number(i.qty)<=0||low(i));
@@ -64,27 +65,36 @@ function openMove(it,type){if(!it)return;
     catch(err){if(err.message!=='auth')toast('บันทึกไม่สำเร็จ ลองใหม่')}finally{const b=$('#m-go');if(b)b.disabled=false}};
 }
 /* ---------- เพิ่ม / แก้ไขรายการ ---------- */
-function openItem(it){it=it||{};
-  drawer(`<div class="d-head"><div><h2>${it.id?'แก้ไขรายการ':'เพิ่มรายการใหม่'}</h2></div><button class="x" id="d-close" aria-label="ปิด">✕</button></div>
+function openItem(it){it=it||{};const isNew=!it.id;
+  drawer(`<div class="d-head"><div><h2>${isNew?'เพิ่มรายการใหม่':'แก้ไขรายการ'}</h2></div><button class="x" id="d-close" aria-label="ปิด">✕</button></div>
   <form id="iform" class="form-grid">
     <label class="fld"><span>ชื่อรายการ *</span><input name="name" required maxlength="80" value="${esc(it.name)}"></label>
-    <label class="fld"><span>หน่วย</span><input name="unit" maxlength="20" placeholder="ห่อ, แผง, ขวด…" value="${esc(it.unit)}"></label>
-    <label class="fld"><span>หมวด</span><input name="category" list="cats" maxlength="30" value="${esc(it.category)}"><datalist id="cats">${CATS.map(c=>`<option value="${c}">`).join('')}</datalist></label>
+    <label class="fld"><span>หมวด</span><input name="category" list="cats" maxlength="30" value="${esc(it.category)}" placeholder="อาหาร, ยา, ของใช้…"><datalist id="cats">${CATS.map(c=>`<option value="${c}">`).join('')}</datalist></label>
+    ${isNew?`<label class="fld"><span>จำนวนรับเข้าตอนนี้</span><input name="qty0" type="number" min="0" inputmode="numeric" placeholder="เว้นว่าง = 0"></label>`:''}
+    <label class="fld"><span>หน่วย</span><input name="unit" maxlength="20" list="units" placeholder="ห่อ, แผง, ขวด…" value="${esc(it.unit)}"><datalist id="units">${['ห่อ','แผง','ขวด','แพ็ค','ถุง','กล่อง','ชิ้น','ซอง','หลอด','ตลับ','กระป๋อง','คู่','ชุด','ฟอง','กิโลกรัม'].map(u=>`<option value="${u}">`).join('')}</datalist></label>
+    ${isNew?`<label class="fld"><span>รับจาก / ผู้บริจาค</span><input name="source" maxlength="80" placeholder="เช่น มัสยิด… / ร้าน… / ซื้อเอง"></label>`:''}
+    <label class="fld"><span>วันหมดอายุ (ถ้ามี)</span><input name="expiry" type="date" value="${esc(it.expiry)}"></label>
+    <label class="fld"><span>ที่เก็บ</span><input name="location" maxlength="60" placeholder="เช่น ห้องเก็บของ ชั้น 2 / ชั้นวาง A" value="${esc(it.location)}"></label>
     <label class="fld"><span>แจ้งเตือนเมื่อเหลือไม่เกิน</span><input name="min" type="number" min="0" inputmode="numeric" value="${esc(it.min)}" placeholder="เว้นว่าง = ไม่แจ้งเตือน"></label>
-    <label class="chk"><input name="needed" type="checkbox" ${it.needed?'checked':''}><span>ต้องการรับบริจาคเพิ่ม (ขึ้นในรายการ "ต้องการ")</span></label>
     <label class="fld"><span>หมายเหตุ</span><input name="note" maxlength="200" value="${esc(it.note)}"></label>
-    ${it.id?'':'<p class="muted small">เพิ่มแล้วกด "+ รับเข้า" เพื่อใส่จำนวนตั้งต้น</p>'}
-    <div class="form-act"><button class="btn primary" type="submit">บันทึก</button></div>
+    <label class="chk"><input name="needed" type="checkbox" ${it.needed?'checked':''}><span>ต้องการรับบริจาคเพิ่ม (ขึ้นในรายการ "ต้องการ")</span></label>
+    <div class="form-act"><button class="btn primary" type="submit" id="i-go">บันทึก</button></div>
   </form>`);
-  $('#iform').onsubmit=async e=>{e.preventDefault();const f=e.target,d={id:it.id||'',name:f.elements.name.value.trim(),unit:f.elements.unit.value.trim(),category:f.elements.category.value.trim(),min:f.elements.min.value,needed:f.elements.needed.checked,note:f.elements.note.value.trim()};
-    if(!d.name)return;try{const r=await apiPost({action:'stock_item',item:d});if(!r.ok){toast('บันทึกไม่สำเร็จ: '+(r.error||''));return}toast('บันทึกรายการแล้ว',true);closeD();loadAll()}catch(err){if(err.message!=='auth')toast('บันทึกไม่สำเร็จ ลองใหม่')}};
+  $('#iform').onsubmit=async e=>{e.preventDefault();const f=e.target,v=n=>f.elements[n]?f.elements[n].value.trim():'';
+    const d={id:it.id||'',name:v('name'),unit:v('unit'),category:v('category'),min:v('min'),needed:f.elements.needed.checked,note:v('note'),expiry:v('expiry'),location:v('location')};
+    if(!d.name)return;const q0=Math.max(0,Math.round(Number(v('qty0'))||0));$('#i-go').disabled=true;
+    try{const r=await apiPost({action:'stock_item',item:d});if(!r.ok){toast('บันทึกไม่สำเร็จ: '+(r.error||''));return}
+      if(isNew&&q0>0){const m=await apiPost({action:'stock_move',itemId:r.id,type:'in',amount:q0,note:['ยอดตั้งต้น',v('source')?'จาก '+v('source'):''].filter(Boolean).join(' · '),by:staffName()});
+        if(!m.ok)toast('เพิ่มรายการแล้ว แต่บันทึกจำนวนไม่สำเร็จ กด "+ รับเข้า" อีกครั้ง');else toast(`เพิ่ม ${d.name} · ${nf(q0)} ${d.unit}`,true)}
+      else toast('บันทึกรายการแล้ว',true);
+      closeD();loadAll()}catch(err){if(err.message!=='auth')toast('บันทึกไม่สำเร็จ ลองใหม่')}finally{const b=$('#i-go');if(b)b.disabled=false}};
 }
 /* ---------- คัดลอก / ส่งออก ---------- */
 $('#copy-need').addEventListener('click',()=>{const need=S.items.filter(i=>i.needed||Number(i.qty)<=0||low(i));
   const txt='📦 ศูนย์ UMMATEE ต้องการรับบริจาค\n'+need.map((i,n)=>`${n+1}. ${i.name}${Number(i.qty)<=0?' (หมด)':low(i)?` (เหลือ ${nf(i.qty)} ${i.unit||''})`:''}`).join('\n');
   (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('คัดลอกแล้ว วางในไลน์ / เพจได้เลย',true)).catch(()=>toast('คัดลอกไม่สำเร็จ'))});
 $('#export').addEventListener('click',()=>{const cell=v=>{let s=String(v==null?'':v);if(/^[=+\-@]/.test(s))s="'"+s;return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
-  const rows=[['รายการ','หมวด','คงเหลือ','หน่วย','ขั้นต่ำ','ต้องการ','หมายเหตุ'],...S.items.map(i=>[i.name,i.category,i.qty,i.unit,i.min,i.needed?'ต้องการ':'',i.note])];
+  const rows=[['รายการ','หมวด','คงเหลือ','หน่วย','ขั้นต่ำ','ต้องการ','วันหมดอายุ','ที่เก็บ','หมายเหตุ'],...S.items.map(i=>[i.name,i.category,i.qty,i.unit,i.min,i.needed?'ต้องการ':'',i.expiry||'',i.location||'',i.note])];
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+rows.map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));a.download=`umplus-stock-${new Date().toISOString().slice(0,10)}.csv`;a.click()});
 
 adminBoot({action:'stock'},'items',r=>{S.items=r.items||[];S.log=r.log||[];S.loaded=Date.now();render()});

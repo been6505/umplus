@@ -19,6 +19,9 @@ const notesOf=c=>String(c.notes||'').replace(/^\[ครัวเรือน \d+
 const tel=c=>String(c.phone||'').replace(/^'/,'').replace(/[^\d+]/g,'');
 const hasPin=c=>c.lat!==''&&c.lat!=null&&c.lng!==''&&c.lng!=null&&!isNaN(+c.lat)&&!isNaN(+c.lng);
 const addr=c=>[c.address,c.district?'เขต'+c.district:''].filter(Boolean).join(' · ');
+/* ลิงก์นำทาง Google Maps: มีหมุดใช้พิกัด ไม่มีหมุดใช้ที่อยู่ · dir_action=navigate = เริ่มนำทางทันทีบนมือถือ */
+const navUrl=c=>{const pin=c&&c.lat!==''&&c.lat!=null&&c.lng!==''&&c.lng!=null&&isFinite(+c.lat)&&isFinite(+c.lng),q=pin?`${(+c.lat).toFixed(6)},${(+c.lng).toFixed(6)}`:[c&&c.address,c&&c.district?'เขต'+c.district:''].filter(Boolean).join(' ');
+  return q?'https://www.google.com/maps/dir/?api=1&dir_action=navigate&destination='+encodeURIComponent(pin?q:q+' กรุงเทพมหานคร'):''};
 function ago(t){t=Number(t);if(!t)return '';const m=Math.round((Date.now()-t)/60000);if(m<1)return 'เมื่อสักครู่';if(m<60)return m+' นาทีที่แล้ว';const h=Math.round(m/60);if(h<24)return h+' ชม.ที่แล้ว';return new Date(t).toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+new Date(t).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}
 function fullTime(t){t=Number(t);return t?new Date(t).toLocaleString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''}
 function toast(msg,ok){const t=document.createElement('div');t.className='toast'+(ok?' ok':'');t.textContent=msg;$('#toasts').append(t);setTimeout(()=>t.remove(),4000)}
@@ -68,7 +71,7 @@ function filtered(){
     if(['open','going','done'].includes(st)&&c.status!==st)return false;
     if(u&&String(sev(c))!==u)return false;
     if(nd&&!(c.needs||[]).join(' ').includes(nd))return false;
-    const fv=$('#f-vr').value;if(fv&&vr(c).result.k!==fv)return false;
+    const fv=$('#f-vr').value;if(fv==='covered'){if(!cov(c))return false}else if(fv==='notcovered'){if(cov(c))return false}else if(fv&&vr(c).result.k!==fv)return false;
     return true}).sort((a,b)=>{const ca=Number(a.createdAt)||0,cb=Number(b.createdAt)||0;
       if(so==='new')return cb-ca;if(so==='old')return ca-cb;if(so==='ppl')return (Number(b.people)||1)-(Number(a.people)||1);
       if(so==='score')return ((a.status==='done')-(b.status==='done'))||(vr(b).score-vr(a).score)||(ca-cb);
@@ -82,9 +85,12 @@ $('#f-toggle').addEventListener('click',()=>{const o=!$('#filters-box').classLis
 const VR_ORDER={confirmed:5,likely:4,conflict:3,unverified:2,notcrit:1,nopin:0};
 let vrCache=new Map();
 function vr(c){const k=c.id+'|'+VERIFY.F.loaded+'|'+c.cctv+'|'+c.urgency+'|'+c.level+'|'+c.lat;const h=vrCache.get(c.id);if(h&&h.k===k)return h.v;const v=VERIFY.assess(c);vrCache.set(c.id,{k,v});return v}
-async function loadFlood(force){try{await VERIFY.load(force)}catch(e){}render()}
+async function loadFlood(force){try{await VERIFY.load(force)}catch(e){}render();if(typeof COVERED!=='undefined')COVERED.load(API_URL,A.key).then(render,render)}
+const cov=c=>typeof COVERED!=='undefined'?COVERED.match(c):null;
+function covBadge(c){const m=cov(c);if(!m)return '';const r=m.best.r;return `<span class="cov" title="${esc(r.org+' · '+r.area+' · '+r.date+' · '+m.best.how)}">🤝 ${esc(r.org)} รับแล้ว</span>`}
+function covSection(c){const m=cov(c);if(!m)return '';return `<section class="cov-box"><b>🤝 พื้นที่นี้มีองค์กรอื่นรับไปแล้ว</b><p class="small">ตรวจสอบก่อนส่งทีม เพื่อไม่ให้ซ้ำซ้อน · ข้อมูลจาก<a href="${COVERED.SHEET_URL}" target="_blank" rel="noopener"> ชีตพื้นที่ที่มอบแล้ว ↗</a></p><ul>${m.all.slice(0,4).map(h=>`<li><b>${esc(h.r.org)}</b> · ${esc(h.r.area)} · ${esc(h.r.date)}<small>${esc(h.how)}${h.d!=null?' · ห่าง '+Math.round(h.d)+' ม.':''}${h.r.link?` · <a href="${esc(h.r.link)}" target="_blank" rel="noopener">แผนที่ ↗</a>`:''}</small></li>`).join('')}</ul></section>`}
 setInterval(()=>{if(A.key&&!document.hidden)loadFlood()},10*60e3);
-function vrBadge(c){const v=vr(c);return `<span class="vr vr-${v.result.k}" title="${esc(v.result.d)}">${esc(v.result.t)}</span><small class="vr-score">คะแนน ${v.score}/100</small>`}
+function vrBadge(c){const v=vr(c);return covBadge(c)+`<span class="vr vr-${v.result.k}" title="${esc(v.result.d)}">${esc(v.result.t)}</span><small class="vr-score">คะแนน ${v.score}/100</small>`}
 
 /* ---------- แสดงผล ---------- */
 function render(){
@@ -185,11 +191,11 @@ function renderDrawer(){
     ['ต้องดูแลเป็นพิเศษ',vul(c).join(', ')||'-'],['ทีมที่รับเคส',c.volunteer||'-'],['แจ้งเมื่อ',fullTime(c.createdAt)],['อัปเดตล่าสุด',fullTime(c.updatedAt)]];
   d.innerHTML=`<div class="d-head"><div><span class="urg urg-${sev(c)}">${URG[sev(c)]}</span> <span class="st st-${esc(c.status)}">${esc(ST[c.status]||'')}</span><h2>${esc((c.needs||[]).join(' · ')||'ขอความช่วยเหลือ')}</h2><small>#${esc(c.id)}</small></div><button class="x" id="d-close" aria-label="ปิด">✕</button></div>
     ${notesOf(c)?`<div class="d-notes"><b>สถานการณ์</b><p>${esc(notesOf(c))}</p></div>`:''}
-    ${vrSection(c)}
+    ${covSection(c)}${vrSection(c)}
     <dl class="d-rows">${rows.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
     <div class="d-act">
       ${t.length>=9?`<a class="btn primary" href="tel:${esc(t)}">โทรหาผู้แจ้ง</a>`:''}
-      ${hasPin(c)?`<a class="btn ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}">นำทาง Google Maps</a>`:''}
+      ${navUrl(c)?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(navUrl(c))}">🧭 ${hasPin(c)?'นำทาง Google Maps':'นำทางตามที่อยู่'}</a>`:''}
       <button class="btn ghost" id="d-copy">คัดลอกข้อมูลเคส</button>
     </div>
     <fieldset class="d-status"><legend>เปลี่ยนสถานะ</legend>
@@ -224,8 +230,8 @@ async function drawMap(list){
 
 /* ---------- ส่งออก CSV ---------- */
 $('#export').addEventListener('click',()=>{const list=filtered();
-  const head=['เลขเคส','แจ้งเมื่อ','ระดับ','สถานะ','ความต้องการ','จำนวนคน','ครัวเรือน','ถุงยังชีพ','ระดับน้ำ','ที่อยู่','เขต','lat','lng','ชื่อ','เบอร์โทร','ทีม','ต้องดูแลเป็นพิเศษ','ผลตรวจพื้นที่','คะแนนวิกฤต','สถานการณ์'];
-  const rows=list.map(c=>[c.id,fullTime(c.createdAt),URG[sev(c)],ST[c.status],(c.needs||[]).join(', '),c.people||1,hh(c)||'',bagsOf(c)==null?'':bagsOf(c),LEVEL[c.level]||'',c.address,c.district,c.lat,c.lng,c.name,String(c.phone||'').replace(/^'/,''),c.volunteer,vul(c).join(', '),vr(c).result.t,vr(c).score,notesOf(c)]);
+  const head=['เลขเคส','แจ้งเมื่อ','ระดับ','สถานะ','ความต้องการ','จำนวนคน','ครัวเรือน','ถุงยังชีพ','ระดับน้ำ','ที่อยู่','เขต','lat','lng','ชื่อ','เบอร์โทร','ทีม','ต้องดูแลเป็นพิเศษ','ผลตรวจพื้นที่','คะแนนวิกฤต','องค์กรอื่นรับแล้ว','สถานการณ์'];
+  const rows=list.map(c=>[c.id,fullTime(c.createdAt),URG[sev(c)],ST[c.status],(c.needs||[]).join(', '),c.people||1,hh(c)||'',bagsOf(c)==null?'':bagsOf(c),LEVEL[c.level]||'',c.address,c.district,c.lat,c.lng,c.name,String(c.phone||'').replace(/^'/,''),c.volunteer,vul(c).join(', '),vr(c).result.t,vr(c).score,(cov(c)?cov(c).best.r.org+' · '+cov(c).best.r.area:''),notesOf(c)]);
   const cell=v=>{let s=String(v==null?'':v);if(/^[=+\-@]/.test(s))s="'"+s;return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
   const csv='﻿'+[head,...rows].map(r=>r.map(cell).join(',')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`umplus-cases-${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);

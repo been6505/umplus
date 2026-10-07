@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#102f42">
+<title>พื้นที่มอบแล้ว · UM+ หลังบ้าน</title>
+<link rel="icon" href="../../assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../admin.css?v=7">
+<link rel="stylesheet" href="../pages.css?v=6">
+<link rel="stylesheet" href="./covered.css?v=9">
+</head>
+<body>
+<section id="login" class="login" hidden>
+  <form id="login-form" class="login-card" autocomplete="off">
+    <img src="../../assets/ummatee-logo.png" alt="UMMATEE" width="110" height="66">
+    <h1>พื้นที่มอบแล้ว · UM+</h1>
+    <p>สำหรับแอดมินและทีมอาสา ใส่รหัสทีมเพื่อเข้าใช้งาน</p>
+    <label class="fld"><span>รหัสทีม</span><input id="login-key" type="password" required autocomplete="current-password"></label>
+    <label class="chk"><input id="login-remember" type="checkbox" checked><span>จำรหัสไว้ในเครื่องนี้</span></label>
+    <button class="btn primary" id="login-go" type="submit">เข้าสู่ระบบ</button>
+    <p class="err" id="login-err" role="alert"></p>
+    <a class="back" href="../../">← กลับหน้าเว็บหลัก</a>
+  </form>
+</section>
+<div id="app" hidden>
+  <header class="top">
+    <a class="brand" href="../../"><img src="../../assets/ummatee-logo.png" alt="" width="60" height="36"><span>UM+ <b>หลังบ้าน</b></span></a>
+    <nav class="tabs" aria-label="เมนูหลังบ้าน"><a href="../dashboard/">แดชบอร์ด</a><a href="../../admin.html">จัดการเคส</a><a href="../teams/">จัดทีม</a><a href="../stock/">สต็อก</a><a href="../covered/" aria-current="page">พื้นที่มอบแล้ว</a></nav>
+    <div class="top-r"><span class="sync" id="sync"></span><button class="btn ghost sm" id="refresh">⟳ โหลดใหม่</button><button class="btn ghost sm" id="logout">ออกจากระบบ</button></div>
+  </header>
+  <main class="wrap" id="main">
+    <div class="cv-head">
+      <div><h1 class="cv-h1">พื้นที่ที่องค์กรอื่นรับแล้ว</h1>
+      <p class="muted">ดึงสดจาก Google Sheet ทุก 5 นาที · ใช้ตรวจก่อนส่งทีม เพื่อไม่ให้ซ้ำพื้นที่</p></div>
+      <div class="cv-act"><button class="btn primary sm" id="add-cov" type="button">+ เพิ่มพื้นที่ที่มอบแล้ว</button><a class="btn ghost-d sm" id="sheet-link" target="_blank" rel="noopener">แก้ไขในชีต ↗</a></div>
+    </div>
+    <div class="cv-tools">
+      <input id="q" type="search" placeholder="ค้นหาพื้นที่ เขต หรือองค์กร" aria-label="ค้นหา">
+      <div class="seg" role="tablist" id="orgs" aria-label="กรองตามองค์กร"></div>
+    </div>
+    <p class="status" id="status">กำลังโหลดข้อมูลจากชีต…</p>
+    <section class="cv-mapcard" aria-label="แผนที่พื้นที่ที่องค์กรอื่นรับแล้ว">
+      <div class="cv-map" id="cmap"></div>
+      <div class="cv-leg"><span><i class="lg-p"></i>ตำแหน่งจากลิงก์</span><span><i class="lg-a"></i>ตำแหน่งโดยประมาณ (จากชื่อพื้นที่)</span><label><input type="checkbox" id="mt-cases" checked><i class="lg-c"></i>เคสที่ยังไม่เสร็จ</label><span class="muted" id="map-miss"></span></div>
+    </section>
+    <section class="cv-stats" id="stats" aria-label="สรุป"></section>
+    <div class="cv-tw"><table class="cv-tbl"><thead><tr><th>องค์กร</th><th>พื้นที่</th><th>เขต</th><th>วันที่</th><th>รายการ / จำนวน</th><th>แผนที่</th><th>เคสที่อาจซ้ำ</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+    <p class="muted small">"เคสที่อาจซ้ำ" นับเคสที่ยังไม่เสร็จซึ่งอยู่ใกล้จุดนี้ (ไม่เกิน ~800 ม.) หรือที่อยู่มีชื่อซอยตรงกัน · ตำแหน่งได้จากลิงก์ Google Maps ในชีต · ถ้าไม่มีลิงก์จะประมาณจากชื่อพื้นที่ (วงประ) · ใส่พิกัดในช่องโลเคชั่นได้ เช่น 13.8123, 100.7012</p>
+  </main>
+</div>
+<div class="drawer-bg" id="drawer-bg" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="ฟอร์มเพิ่มพื้นที่"></aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="../common.js?v=2"></script>
+<script src="../covered.js?v=9"></script>
+<script src="./covered-page.js?v=5"></script>
+<script src="./covered-form.js?v=2"></script>
+</body>
+</html>

@@ -103,6 +103,11 @@ function setView(view,record=true){
 }
 
 /* ---------------- cases list ---------------- */
+/* ลิงก์นำทาง Google Maps: มีหมุดใช้พิกัด ไม่มีหมุดใช้ที่อยู่ · dir_action=navigate = เริ่มนำทางทันทีบนมือถือ */
+function navUrl(c){
+  const pin=hasPin(c),q=pin?`${(+c.lat).toFixed(6)},${(+c.lng).toFixed(6)}`:[c.address,c.district?'เขต'+c.district:''].filter(Boolean).join(' ');
+  if(!q)return '';return 'https://www.google.com/maps/dir/?api=1&dir_action=navigate&destination='+encodeURIComponent(pin?q:q+' กรุงเทพมหานคร');
+}
 function caseCard(c){
   const div=document.createElement('button');div.className='case-card case-simple'+(c.status!=='done'?' crit-card-'+critLevel(c):'');div.type='button';div.dataset.id=c.id;
   const top=document.createElement('div');top.className='case-top';
@@ -329,7 +334,7 @@ function drawCaseMarkers(){
     const icon=L.divIcon({className:'case-pin',html:`<span style="background:${col}"></span>`,iconSize:[30,38],iconAnchor:[15,36],popupAnchor:[0,-32]});
     pts.push([c.lat,c.lng]);
     L.marker([c.lat,c.lng],{icon,zIndexOffset:1000,title:caseTitle(c)})
-      .bindPopup(`<b style="color:${critLevel(c)==='red'?'#c62828':critLevel(c)==='orange'?'#c25e00':'#a67c00'}">${escH(critLabel(c))}</b> · <b>${escH(statusLabel(c))}</b><br>${escH((c.needs||[]).join(', ')||'ขอความช่วยเหลือ')} · ${escH(c.people||1)} คน${hhOf(c)?' · '+hhOf(c)+' ครัวเรือน':''}${c.level&&typeof LEVEL_TH!=='undefined'?'<br>ระดับน้ำ: '+escH(LEVEL_TH[c.level]||c.level):''}${(c.address||c.district)?'<br>📍 '+escH([c.address,c.district?'เขต'+c.district:''].filter(Boolean).join(' · ')):''}${(c.name||c.phone)?'<br>'+(c.name?'👤 '+escH(c.name)+' ':'')+(c.phone?(isVolunteer&&String(c.phone).replace(/[^\d+]/g,'').length>=9?'☎ <a href="tel:'+escH(String(c.phone).replace(/[^\d+]/g,''))+'">'+escH(c.phone)+'</a>':'☎ '+escH(c.phone)):''):''}<br><a href="#" data-open-case="${escH(c.id)}">ดูรายละเอียด →</a>${c.status!=='done'?`<br><a href="#" class="pop-trip" data-trip-add="${escH(c.id)}">${typeof tripIndex==='function'&&tripIndex(c.id)>=0?'✓ อยู่ในแผนเดินทาง (แตะเพื่อเอาออก)':'➕ เพิ่มในแผนเดินทาง'}</a>`:''}`)
+      .bindPopup(`<b style="color:${critLevel(c)==='red'?'#c62828':critLevel(c)==='orange'?'#c25e00':'#a67c00'}">${escH(critLabel(c))}</b> · <b>${escH(statusLabel(c))}</b><br>${escH((c.needs||[]).join(', ')||'ขอความช่วยเหลือ')} · ${escH(c.people||1)} คน${hhOf(c)?' · '+hhOf(c)+' ครัวเรือน':''}${c.level&&typeof LEVEL_TH!=='undefined'?'<br>ระดับน้ำ: '+escH(LEVEL_TH[c.level]||c.level):''}${(c.address||c.district)?'<br>📍 '+escH([c.address,c.district?'เขต'+c.district:''].filter(Boolean).join(' · ')):''}${(c.name||c.phone)?'<br>'+(c.name?'👤 '+escH(c.name)+' ':'')+(c.phone?(isVolunteer&&String(c.phone).replace(/[^\d+]/g,'').length>=9?'☎ <a href="tel:'+escH(String(c.phone).replace(/[^\d+]/g,''))+'">'+escH(c.phone)+'</a>':'☎ '+escH(c.phone)):''):''}<br><a href="#" data-open-case="${escH(c.id)}">ดูรายละเอียด →</a>${c.status!=='done'?` · <a href="${escH(navUrl(c))}" target="_blank" rel="noopener"><b>🧭 นำทาง</b></a>`:''}${c.status!=='done'?`<br><a href="#" class="pop-trip" data-trip-add="${escH(c.id)}">${typeof tripIndex==='function'&&tripIndex(c.id)>=0?'✓ อยู่ในแผนเดินทาง (แตะเพื่อเอาออก)':'➕ เพิ่มในแผนเดินทาง'}</a>`:''}`)
       .addTo(pinLayer);
   });
   if(!floodFitted&&pts.length){fmap.fitBounds(pts,{padding:[40,40],maxZoom:14});floodFitted=true}
@@ -399,7 +404,7 @@ function renderDetail(){
   }else{const np=document.createElement('p');np.className='detail-nopin';np.textContent='ผู้แจ้งไม่ได้ปักหมุดตำแหน่ง';const addrP=card.querySelector(':scope > p');if(addrP)addrP.after(np);else card.prepend(np)}
   if(isVolunteer&&stripHH(c.notes)){const h2=document.createElement('h2');h2.textContent='สถานการณ์';const p=document.createElement('p');p.textContent=stripHH(c.notes);card.append(h2,p)}
   const actions=document.createElement('div');actions.className='detail-actions';
-  if(hasPin(c)){const a=document.createElement('a');a.className='secondary-button';a.textContent='นำทางด้วย Google Maps ↗';a.href=`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`;a.target='_blank';a.rel='noopener';actions.append(a)}
+  const nu=navUrl(c);if(nu){const a=document.createElement('a');a.className='secondary-button nav-go';a.textContent=hasPin(c)?'🧭 นำทางด้วย Google Maps':'🧭 นำทางตามที่อยู่ (ไม่มีหมุด)';a.href=nu;a.target='_blank';a.rel='noopener';actions.prepend(a)}
   if(typeof tripButton==='function'&&hasPin(c)&&c.status!=='done')actions.append(tripButton(c));
   if(isVolunteer){
     const tel=String(c.phone||'').replace(/[^\d+]/g,'');

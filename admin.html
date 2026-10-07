@@ -9,7 +9,7 @@
 <link rel="icon" href="./assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./admin.css?v=6">
+<link rel="stylesheet" href="./admin.css?v=7">
 </head>
 <body>
 <!-- ===== เข้าสู่ระบบ ===== -->
@@ -30,7 +30,7 @@
 <div id="app" class="app" hidden>
   <header class="top">
     <a class="brand" href="./"><img src="./assets/ummatee-logo.png" alt="" width="60" height="36"><span>UM+ <b>หลังบ้าน</b></span></a>
-    <nav class="tabs" aria-label="เมนูหลังบ้าน"><a href="./admin/dashboard/">แดชบอร์ด</a><a href="./admin.html" aria-current="page">จัดการเคส</a><a href="./admin/teams/">จัดทีม</a><a href="./admin/stock/">สต็อก</a></nav>
+    <nav class="tabs" aria-label="เมนูหลังบ้าน"><a href="./admin/dashboard/">แดชบอร์ด</a><a href="./admin.html" aria-current="page">จัดการเคส</a><a href="./admin/teams/">จัดทีม</a><a href="./admin/stock/">สต็อก</a><a href="./admin/covered/">พื้นที่มอบแล้ว</a></nav>
     <div class="top-r">
       <span class="sync" id="sync"></span>
       <button class="btn ghost sm" id="refresh" title="โหลดใหม่">⟳ โหลดใหม่</button>
@@ -48,7 +48,7 @@
         <select id="f-status" aria-label="สถานะ"><option value="active">ยังไม่เสร็จ</option><option value="open">รอความช่วยเหลือ</option><option value="going">ทีมกำลังไป</option><option value="done">ช่วยเหลือแล้ว</option><option value="all">ทั้งหมด</option></select>
         <select id="f-urg" aria-label="ความเร่งด่วน"><option value="">ทุกระดับ</option><option value="3">วิกฤต</option><option value="2">เร่งด่วน</option><option value="1">ทั่วไป</option></select>
         <select id="f-need" aria-label="ความต้องการ"><option value="">ทุกความต้องการ</option><option>อพยพ</option><option value="ผู้ป่วย">ผู้ป่วย / ผู้สูงอายุ</option><option value="อาหาร">อาหาร / น้ำดื่ม</option><option>ยา</option><option>ของใช้เด็ก</option><option value="เรือ">เรือ / รถสูง</option><option value="อื่น">อื่น ๆ</option></select>
-        <select id="f-vr" aria-label="ผลตรวจพื้นที่"><option value="">ผลตรวจ: ทั้งหมด</option><option value="confirmed">วิกฤตจริง</option><option value="likely">น่าจะวิกฤต</option><option value="conflict">ข้อมูลขัดแย้ง</option><option value="unverified">รอตรวจเพิ่ม</option><option value="notcrit">ไม่น่าวิกฤต</option><option value="nopin">ยืนยันไม่ได้ (ไม่มีพิกัด/ที่อยู่)</option></select>
+        <select id="f-vr" aria-label="ผลตรวจพื้นที่"><option value="">ผลตรวจ: ทั้งหมด</option><option value="confirmed">วิกฤตจริง</option><option value="likely">น่าจะวิกฤต</option><option value="conflict">ข้อมูลขัดแย้ง</option><option value="unverified">รอตรวจเพิ่ม</option><option value="notcrit">ไม่น่าวิกฤต</option><option value="covered">🤝 องค์กรอื่นรับแล้ว</option><option value="notcovered">ยังไม่มีองค์กรอื่นรับ</option><option value="nopin">ยืนยันไม่ได้ (ไม่มีพิกัด/ที่อยู่)</option></select>
         <select id="f-sort" aria-label="เรียงตาม"><option value="urg">เรียง: วิกฤตก่อน</option><option value="new">เรียง: ใหม่สุด</option><option value="old">เรียง: รอนานสุด</option><option value="ppl">เรียง: คนมากสุด</option><option value="score">เรียง: คะแนนวิกฤต (ตรวจพื้นที่)</option></select>
         </div>
         <div class="seg" role="tablist" aria-label="มุมมอง"><button role="tab" data-mode="list" aria-selected="true">รายการ</button><button role="tab" data-mode="map" aria-selected="false">แผนที่</button></div>
@@ -68,6 +68,7 @@
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script src="./admin/verify.js?v=2"></script>
-<script src="./admin.js?v=5"></script>
+<script src="./admin/covered.js?v=9"></script>
+<script src="./admin.js?v=7"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@
 <link rel="icon" href="../../assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./dashboard.css?v=3">
+<link rel="stylesheet" href="./dashboard.css?v=5">
 </head>
 <body>
 <section id="login" class="login" hidden>
@@ -28,7 +28,7 @@
 <div id="app" hidden>
   <header class="top">
     <a class="brand" href="../../"><img src="../../assets/ummatee-logo.png" alt="" width="60" height="36"><span>UM+ <b>หลังบ้าน</b></span></a>
-    <nav class="tabs" aria-label="เมนูหลังบ้าน"><a href="./" aria-current="page">แดชบอร์ด</a><a href="../../admin.html">จัดการเคส</a><a href="../teams/">จัดทีม</a><a href="../stock/">สต็อก</a></nav>
+    <nav class="tabs" aria-label="เมนูหลังบ้าน"><a href="./" aria-current="page">แดชบอร์ด</a><a href="../../admin.html">จัดการเคส</a><a href="../teams/">จัดทีม</a><a href="../stock/">สต็อก</a><a href="../covered/">พื้นที่มอบแล้ว</a></nav>
     <div class="top-r"><span class="sync" id="sync"></span><button class="btn ghost sm" id="refresh">⟳</button><button class="btn ghost sm" id="logout">ออก</button></div>
   </header>
   <main class="wrap" id="main">
@@ -38,6 +38,12 @@
       <span class="f-note" id="range-note"></span>
     </div>
 
+    <p class="status" id="status" role="status" hidden></p>
+    <article class="card mapcard"><div class="map-h"><div><h2>แผนที่เคส</h2><p class="sub" id="map-sub">จุดเคสในช่วงที่เลือก · เส้นสี = ถนนน้ำท่วมจาก Floodboard</p></div>
+      <div class="map-tg"><label><input type="checkbox" id="mt-done"> แสดงเคสที่ช่วยแล้ว</label><label><input type="checkbox" id="mt-flood" checked> ถนนน้ำท่วม</label><label><input type="checkbox" id="mt-cov" checked> พื้นที่องค์กรอื่นรับแล้ว</label></div></div>
+      <div class="dmap-wrap"><div id="dmap" class="dmap" role="region" aria-label="แผนที่เคส"></div><div class="fs-bar"><button type="button" class="fs-btn fs-lay" id="fs-lay" aria-expanded="false" aria-label="ชั้นข้อมูลและสัญลักษณ์">☰</button><button type="button" class="fs-btn" id="fs-btn" aria-label="แผนที่เต็มจอ" title="แผนที่เต็มจอ">⛶</button></div></div>
+      <div class="map-leg"><span><i style="background:#d03b3b"></i>วิกฤต</span><span><i style="background:#ec835a"></i>เร่งด่วน</span><span><i style="background:#fab219"></i>ทั่วไป</span><span><i style="background:#2a78d6"></i>ทีมกำลังไป</span><span><i style="background:#0ca30c"></i>ช่วยแล้ว</span><span><i style="background:#7b3fc4;border-radius:3px"></i>องค์กรอื่นรับแล้ว</span><span class="muted" id="map-nopin"></span></div>
+    </article>
     <section class="kpis" id="kpis" aria-label="ตัวเลขสำคัญ"></section>
 
     <div class="grid">
@@ -56,6 +62,7 @@
 </div>
 <div class="tip" id="tip" role="tooltip" hidden></div>
 <script src="../verify.js?v=2"></script>
-<script src="./dashboard.js?v=3"></script>
+<script src="../covered.js?v=9"></script>
+<script src="./dashboard.js?v=7"></script>
 </body>
 </html>

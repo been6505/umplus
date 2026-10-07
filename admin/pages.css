@@ -47,6 +47,25 @@
 .seg{max-width:100%;overflow-x:auto;scrollbar-width:none}.seg::-webkit-scrollbar{display:none}.seg button{flex:none;white-space:nowrap}
 .bar,.bar-row,.bar-top,.cols>*,.qcase,.team{min-width:0}
 .assign select{width:100%}.team-h>div{min-width:0}.tcases li{overflow-wrap:anywhere}
+/* ฟอร์มเพิ่ม/แก้ไข แสดงเต็มจอ */
+.drawer{left:0;right:0;top:0;bottom:0;width:100%;max-width:none;padding:0;box-shadow:none;background:var(--bg)}
+.drawer>.d-head,.drawer>form{max-width:860px;margin-left:auto;margin-right:auto}
+.drawer>.d-head{position:sticky;top:0;z-index:2;background:#fff;margin:0 auto;padding:18px 24px;border-bottom:1px solid var(--line);max-width:none}
+.drawer>.d-head>div{max-width:812px;width:100%;margin:0 auto}
+.drawer>form{background:#fff;border-radius:16px;margin-top:20px;margin-bottom:40px;padding:24px;border:1px solid var(--line)}
+.drawer .form-grid{grid-template-columns:1fr 1fr;gap:16px 20px}
+.drawer .form-grid>.mv-seg,.drawer .form-grid>.chk,.drawer .form-grid>p,.drawer .form-grid>.form-act,.drawer .form-grid>#preview{grid-column:1/-1}
+.drawer .form-act .btn{min-width:160px;min-height:50px;font-size:16px}
+.drawer .fld span{font-size:15px}
+@media(max-width:700px){.drawer>.d-head{padding:14px 16px}.drawer>form{margin:12px;padding:16px;border-radius:14px}.drawer .form-grid{grid-template-columns:1fr}.drawer .form-act .btn{flex:1}}
+/* ไม่ต้องเลื่อน: มือถือใช้ 2 คอลัมน์แบบกะทัดรัด, จอเตี้ยลดระยะห่าง */
+@media(max-width:700px){.drawer .form-grid{grid-template-columns:1fr 1fr;gap:10px}.drawer>form{margin:10px;padding:12px}
+  .drawer .fld{gap:4px}.drawer .fld span{font-size:13px}.drawer .form-grid select,.drawer .form-grid input:not([type=checkbox]){min-height:42px;font-size:15px;padding:6px 10px}
+  .drawer>.d-head{padding:10px 14px}.drawer>.d-head h2{font-size:18px}.drawer .x{width:36px;height:36px}}
+@media(max-height:820px) and (min-width:701px){.drawer>.d-head{padding:10px 24px}.drawer>form{margin-top:10px;padding:16px 24px}.drawer .form-grid{gap:10px 20px}.drawer .form-grid select,.drawer .form-grid input:not([type=checkbox]){min-height:40px}}
+#preview:empty{display:none}
+
+.cov{display:inline-block;background:#efe7fb;color:#5b2d91;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;white-space:nowrap}
 
 /* ตำแหน่งสด Google Maps (หน้าจัดทีม) */
 .team-m a.gm{color:#1a73e8}
@@ -54,3 +73,6 @@
 .gm-help summary{cursor:pointer;font-weight:600}
 .gm-help ol{margin:6px 0 8px;padding-left:20px;line-height:1.6}
 .form-grid .wide{grid-column:1/-1}
+
+/* ลิงก์นำทาง Google Maps (หน้าจัดทีม) */
+.nav-go{color:#1a73e8;font-weight:600;text-decoration:none;white-space:nowrap}.qcase .nav-go{display:inline-block;margin-top:6px}
