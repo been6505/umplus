@@ -76,3 +76,22 @@
 
 /* ลิงก์นำทาง Google Maps (หน้าจัดทีม) */
 .nav-go{color:#1a73e8;font-weight:600;text-decoration:none;white-space:nowrap}.qcase .nav-go{display:inline-block;margin-top:6px}
+/* หน้าประกาศแจ้งเตือน */
+.bc-setup{max-width:560px;text-align:left}.bc-setup ol{padding-left:20px;line-height:1.8;font-size:14px}.bc-setup code{background:#eef3f4;border-radius:5px;padding:1px 5px}
+.bc-seg{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}.bc-seg legend{font-weight:600;font-size:14px;margin-bottom:6px;padding:0}
+.bc-seg label,.bc-dists label{position:relative}.bc-seg input,.bc-dists input{position:absolute;opacity:0}
+.bc-seg span,.bc-dists span{display:inline-block;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;cursor:pointer;background:#fff}
+.bc-seg input:checked+span,.bc-dists input:checked+span{border-color:var(--teal);background:var(--tint);color:var(--teal);font-weight:700}
+.bc-seg input:focus-visible+span,.bc-dists input:focus-visible+span{outline:3px solid #56ada4;outline-offset:2px}
+.bc-dists{display:flex;flex-wrap:wrap;gap:6px;max-height:220px;overflow:auto;padding:2px}.bc-dists span{padding:5px 10px;font-size:13px}
+.bc-form textarea{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:16px;resize:vertical;width:100%}
+.bc-map-box{height:280px;border-radius:12px;border:1px solid var(--line);margin-bottom:10px;z-index:0}
+.bc-list{display:grid;gap:10px}
+.bc{border-radius:14px;padding:12px 14px;border:1px solid;border-left-width:6px;background:#fff;line-height:1.55}
+.bc-danger{border-color:#e9b4b4;border-left-color:#c62828;background:#fff4f4}.bc-warn{border-color:#f0d3a8;border-left-color:#ef6c00;background:#fff8ee}.bc-info{border-color:#c9daf0;border-left-color:#1f5fbf;background:#f4f8fe}
+.bc.bc-off{opacity:.55;filter:grayscale(.6)}
+.bc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}.bc-h small{margin-left:auto;color:var(--muted)}.bc-lv{font-weight:700}
+.bc-maybe{border-radius:99px;padding:1px 8px;font-weight:700;background:#eef1f3;color:#526d79}
+.bc strong{display:block;font-size:16px;margin:4px 0 2px}.bc p{margin:0;font-size:14px;white-space:pre-line;overflow-wrap:anywhere}
+.bc-f{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px;font-size:13px;color:#526d79}
+.bc-map{color:#c62828;font-weight:600;background:none;border:0;padding:0;font-size:13px;cursor:pointer}

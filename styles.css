@@ -28,3 +28,17 @@
 .trk-opt{display:flex;flex-direction:column;gap:4px;font-size:13px;margin-top:8px}.trk-opt:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:8px}
 .trk-opt select{border:1px solid #d5e1e5;border-radius:9px;padding:8px;min-height:40px;background:#fff}
 .trk-note{font-size:12px;color:#7a909a;line-height:1.55;margin:8px 0 0}
+/* ประกาศแจ้งเตือนพื้นที่ (broadcast) */
+.bc-bar{display:grid;gap:10px;margin:0 0 18px}
+.bc{border-radius:14px;padding:12px 14px;border:1px solid;border-left-width:6px;background:#fff;line-height:1.55}
+.bc-danger{border-color:#e9b4b4;border-left-color:#c62828;background:#fff4f4}.bc-warn{border-color:#f0d3a8;border-left-color:#ef6c00;background:#fff8ee}.bc-info{border-color:#c9daf0;border-left-color:#1f5fbf;background:#f4f8fe}
+.bc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}.bc-h small{margin-left:auto;color:#7a909a}
+.bc-lv{font-weight:700}.bc-danger .bc-lv{color:#b71c1c}.bc-warn .bc-lv{color:#a24d00}.bc-info .bc-lv{color:#1f5fbf}
+.bc-you,.bc-maybe{border-radius:99px;padding:1px 8px;font-weight:700}.bc-you{background:#c62828;color:#fff}.bc-maybe{background:#eef1f3;color:#526d79}
+.bc strong{display:block;font-size:16px;margin:4px 0 2px;color:#1d2327}.bc p{margin:0;font-size:14px;color:#3c5361;white-space:pre-line;overflow-wrap:anywhere}
+.bc-f{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px;font-size:13px;color:#526d79}
+.bc-f a,.bc-map{color:#14756e;font-weight:600;background:none;border:0;padding:0;font-size:13px;cursor:pointer}
+.bc-foot{display:flex;flex-wrap:wrap;gap:8px}.bc-more{border:1px solid #cfdde2;background:#fff;border-radius:99px;padding:6px 12px;font-size:13px;color:#14756e;font-weight:600}
+.bc-district{border:1px solid #cfdde2;border-radius:99px;padding:6px 10px;font-size:13px;background:#fff}
+.bc-none{margin:0;font-size:13px;color:#526d79}
+.bc-flash{animation:bcflash 1.6s}@keyframes bcflash{0%,60%{box-shadow:0 0 0 4px #ef6c0066}100%{box-shadow:none}}

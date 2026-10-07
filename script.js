@@ -502,6 +502,7 @@ $('#send-request').addEventListener('click',async()=>{
     const r=await apiCreate(pendingRequest);
     if(!r.ok)throw new Error(r.error||'error');
     if(r.token&&typeof rememberMyCase==='function')rememberMyCase(r.id,r.token,r.clientId);
+    if(typeof bcRememberPlace==='function')bcRememberPlace(pendingRequest.lat,pendingRequest.lng); // ใช้เทียบพื้นที่ประกาศแจ้งเตือน
     res.className='notice success';
     res.innerHTML='';
     const s=document.createElement('strong');s.textContent=r.queued?'ส่งคำขอแล้ว (ผ่านระบบสำรอง) · รหัสอ้างอิง '+r.clientId.slice(-6).toUpperCase():'ส่งคำขอแล้ว · เลขเคส '+r.id;
