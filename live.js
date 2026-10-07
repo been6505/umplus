@@ -129,6 +129,14 @@ function fillLiveControls(box){
   if(isSharing()){btn.className='secondary-button';btn.textContent='หยุดแชร์ตำแหน่ง';btn.onclick=()=>stopSharing()}
   else{btn.className='solid-button';btn.textContent='📍 เริ่มแชร์ตำแหน่งทีม';btn.onclick=()=>{const t=team.value.trim();if(!t){team.focus();team.placeholder='ใส่ชื่อทีมก่อน';return}store.set('uh_team',t);startSharing()}}
   box.append(h,team,btn);
+  /* เว็บส่งตำแหน่งได้เฉพาะตอนเปิดหน้าค้าง → แนะนำให้แชร์ตำแหน่งสดจาก Google Maps ซึ่งส่งต่อแม้ล็อกจอ */
+  const gm=document.createElement('details');gm.className='gm-share';
+  gm.innerHTML=`<summary>📍 แชร์ผ่าน Google Maps (ส่งต่อแม้ล็อกจอ)</summary>
+    <ol><li>แตะ <b>เปิด Google Maps</b> → รูปโปรไฟล์ → <b>การแชร์ตำแหน่ง</b> → <b>แชร์ตำแหน่ง</b></li>
+    <li>ตั้งเวลา <b>จนกว่าคุณจะปิด</b> → <b>คัดลอกไปยังคลิปบอร์ด</b></li>
+    <li>วางลิงก์ที่ทีมของคุณในหน้า <a href="./admin/teams/" target="_blank" rel="noopener">จัดทีม</a> (หรือส่ง LINE ให้แอดมิน)</li></ol>
+    <a class="secondary-button" href="https://www.google.com/maps" target="_blank" rel="noopener">เปิด Google Maps</a>`;
+  box.append(gm);
   const nb=notifyButton('🔔 เปิดแจ้งเตือนเคสใหม่');if(nb)box.append(nb);
 }
 

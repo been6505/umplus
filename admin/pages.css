@@ -47,3 +47,10 @@
 .seg{max-width:100%;overflow-x:auto;scrollbar-width:none}.seg::-webkit-scrollbar{display:none}.seg button{flex:none;white-space:nowrap}
 .bar,.bar-row,.bar-top,.cols>*,.qcase,.team{min-width:0}
 .assign select{width:100%}.team-h>div{min-width:0}.tcases li{overflow-wrap:anywhere}
+
+/* ตำแหน่งสด Google Maps (หน้าจัดทีม) */
+.team-m a.gm{color:#1a73e8}
+.gm-help{font-size:13px;background:var(--soft,#f3f6f8);border-radius:10px;padding:8px 12px}
+.gm-help summary{cursor:pointer;font-weight:600}
+.gm-help ol{margin:6px 0 8px;padding-left:20px;line-height:1.6}
+.form-grid .wide{grid-column:1/-1}

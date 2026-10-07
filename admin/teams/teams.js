@@ -9,6 +9,11 @@ const hasPin=c=>c&&c.lat!==''&&c.lat!=null&&c.lng!==''&&c.lng!=null&&isFinite(+c
 const km=(a,b,c,d)=>{const R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,h=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h))};
 const tname=s=>String(s||'').replace(/^'/,'').trim();
 const tel=p=>String(p||'').replace(/^'/,'').replace(/[^\d+]/g,'');
+/* ตำแหน่งสดผ่าน Google Maps: ทีมแชร์ตำแหน่งจากแอป Google Maps (ทำงานต่อแม้ล็อกจอ) แล้ววางลิงก์ไว้ที่ทีม
+   ลิงก์เก็บต่อท้ายหมายเหตุ (📍<url>) จึงไม่ต้องแก้ Apps Script · ส่งช่อง gmaps ไปด้วยเผื่อหลังบ้านรองรับ */
+const GM_RE=/https:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.(?:com|co\.th)\/maps|maps\.google\.(?:com|co\.th))[^\s<>"']*/i;
+const gmOf=t=>{const m=String(t&&t.gmaps||'').match(GM_RE)||String(t&&t.note||'').match(GM_RE);return m?m[0]:''};
+const noteText=t=>String(t&&t.note||'').replace(GM_RE,'').replace(/\s*📍\s*/g,' ').trim();
 
 async function loadAll(){
   $('#sync').textContent='กำลังโหลด…';
@@ -43,12 +48,12 @@ function render(){
   const list=R.filter(t=>T.filter==='all'||t.status===T.filter).sort((a,b)=>({ready:0,out:1,rest:2}[a.status]??3)-({ready:0,out:1,rest:2}[b.status]??3)||String(a.name).localeCompare(String(b.name),'th'));
   const el=$('#team-list');
   if(!R.length)el.innerHTML='<p class="empty">ยังไม่มีทีม กด "+ เพิ่มทีม" เพื่อเริ่ม<br><small>ทีมที่เคยรับเคสจะขึ้นด้านล่างให้เพิ่มได้ในคลิกเดียว</small></p>';
-  else el.innerHTML=list.map(t=>{const cs=teamCases(t.name),g=cs.filter(c=>c.status==='going'),d=cs.filter(c=>c.status==='done'),lv=liveOf(t.name),p=tel(t.phone);
+  else el.innerHTML=list.map(t=>{const cs=teamCases(t.name),g=cs.filter(c=>c.status==='going'),d=cs.filter(c=>c.status==='done'),lv=liveOf(t.name),p=tel(t.phone),gm=gmOf(t),nt=noteText(t);
     return `<article class="team st-${esc(t.status)}"><div class="team-h"><div><b>${esc(t.name)}</b><small>${[t.vehicle?VEH[t.vehicle]:'',t.members?t.members+' คน':'',t.zone?'พื้นที่ '+t.zone:''].filter(Boolean).map(esc).join(' · ')||'ยังไม่ระบุรายละเอียด'}</small></div>
       <select class="tst tst-${esc(t.status)}" data-tst="${esc(t.id)}" aria-label="สถานะทีม ${esc(t.name)}">${Object.entries(TST).map(([k,v])=>`<option value="${k}" ${t.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
-      <div class="team-m">${t.leader?`หัวหน้าทีม ${esc(t.leader)} `:''}${p.length>=9?`<a href="tel:${esc(p)}">${esc(tname(t.phone))}</a>`:''}${lv?`<span class="live">● แชร์ตำแหน่ง ${esc(ago(lv.updatedAt))}</span>`:''}</div>
+      <div class="team-m">${t.leader?`หัวหน้าทีม ${esc(t.leader)} `:''}${p.length>=9?`<a href="tel:${esc(p)}">${esc(tname(t.phone))}</a>`:''}${lv?`<span class="live">● แชร์ตำแหน่ง ${esc(ago(lv.updatedAt))}</span>`:''}${gm?`<a class="gm" href="${esc(gm)}" target="_blank" rel="noopener">📍 ตำแหน่งสด Google Maps</a>`:''}</div>
       ${g.length?`<ul class="tcases">${g.map(c=>`<li><span class="urg urg-${sev(c)}">${URG[sev(c)]}</span> ${esc((c.needs||[]).join(', ')||'ขอความช่วยเหลือ')} · ${esc(c.people||1)} คน <small>${esc([c.address,c.district?'เขต'+c.district:''].filter(Boolean).join(' · '))}</small> <button class="linkish" data-done="${esc(c.id)}">✓ ช่วยแล้ว</button></li>`).join('')}</ul>`:'<p class="muted small">ไม่มีเคสที่กำลังไป</p>'}
-      <div class="team-f"><span class="muted small">ช่วยแล้ว ${d.length} เคส${t.note?' · '+esc(t.note):''}</span><button class="btn ghost sm" data-edit="${esc(t.id)}">แก้ไข</button></div></article>`}).join('')||'<p class="empty">ไม่มีทีมในสถานะนี้</p>';
+      <div class="team-f"><span class="muted small">ช่วยแล้ว ${d.length} เคส${nt?' · '+esc(nt):''}</span><button class="btn ghost sm" data-edit="${esc(t.id)}">แก้ไข</button></div></article>`}).join('')||'<p class="empty">ไม่มีทีมในสถานะนี้</p>';
   /* teams seen in cases but not in roster */
   const known=new Set(R.map(t=>tname(t.name))),seen=[...new Set(T.cases.map(c=>tname(c.volunteer)).filter(Boolean))].filter(n=>!known.has(n));
   if(seen.length)el.insertAdjacentHTML('beforeend',`<div class="seen"><small class="muted">ทีมที่เคยรับเคสแต่ยังไม่อยู่ในรายชื่อ:</small> ${seen.map(n=>`<button class="chip" data-quick="${esc(n)}">+ ${esc(n)}</button>`).join('')}</div>`);
@@ -90,12 +95,22 @@ function openForm(t){t=t||{status:'ready'};const d=$('#drawer');
     <label class="fld"><span>พาหนะ</span><select name="vehicle"><option value="">ไม่ระบุ</option>${Object.entries(VEH).map(([k,v])=>`<option value="${k}" ${t.vehicle===k?'selected':''}>${v}</option>`).join('')}</select></label>
     <label class="fld"><span>พื้นที่รับผิดชอบ</span><input name="zone" maxlength="80" placeholder="เช่น บึงกุ่ม, ลาดพร้าว" value="${esc(t.zone)}"></label>
     <label class="fld"><span>สถานะ</span><select name="status">${Object.entries(TST).map(([k,v])=>`<option value="${k}" ${t.status===k?'selected':''}>${v}</option>`).join('')}</select></label>
-    <label class="fld"><span>หมายเหตุ</span><input name="note" maxlength="300" value="${esc(t.note)}"></label>
+    <label class="fld wide"><span>ลิงก์ตำแหน่งสด Google Maps</span><input name="gmaps" inputmode="url" maxlength="200" placeholder="https://maps.app.goo.gl/…" value="${esc(gmOf(t))}"></label>
+    <details class="gm-help wide"><summary>วิธีแชร์ตำแหน่งสดจาก Google Maps (ส่งต่อแม้ล็อกจอ)</summary>
+      <ol><li>เปิดแอป Google Maps → แตะรูปโปรไฟล์ → <b>การแชร์ตำแหน่ง</b> → <b>แชร์ตำแหน่ง</b></li>
+      <li>ตั้งเวลา <b>จนกว่าคุณจะปิด</b> → เลือก <b>คัดลอกไปยังคลิปบอร์ด</b> (หรือส่งทาง LINE ให้แอดมิน)</li>
+      <li>วางลิงก์ในช่องด้านบน แล้วกดบันทึก (วางทั้งข้อความที่คัดลอกมาได้เลย ระบบดึงลิงก์ออกให้)</li></ol>
+      <a class="btn ghost sm" href="https://www.google.com/maps" target="_blank" rel="noopener">เปิด Google Maps</a></details>
+    <label class="fld"><span>หมายเหตุ</span><input name="note" maxlength="200" value="${esc(noteText(t))}"></label>
     <div class="form-act"><button class="btn primary" type="submit">บันทึก</button>${t.id?'<button class="btn ghost" type="button" id="t-off">ปิดทีมนี้</button>':''}</div>
   </form>`;
   d.hidden=false;$('#drawer-bg').hidden=false;
   $('#d-close').onclick=closeForm;$('#drawer-bg').onclick=closeForm;
-  $('#tform').onsubmit=async e=>{e.preventDefault();const fd=Object.fromEntries(new FormData(e.target));if(!fd.name.trim())return;if(await saveTeam({...t,...fd,id:t.id||''}))closeForm()};
+  $('#tform').onsubmit=async e=>{e.preventDefault();const fd=Object.fromEntries(new FormData(e.target));if(!fd.name.trim())return;
+    const raw=String(fd.gmaps||'').trim(),m=raw.match(GM_RE),gm=m?m[0]:'';
+    if(raw&&!gm){toast('ลิงก์ต้องเป็นลิงก์แชร์จาก Google Maps เช่น https://maps.app.goo.gl/…');e.target.gmaps.focus();return}
+    fd.gmaps=gm;fd.note=[String(fd.note||'').trim(),gm?'📍'+gm:''].filter(Boolean).join(' ');
+    if(await saveTeam({...t,...fd,id:t.id||''}))closeForm()};
   const off=$('#t-off');if(off)off.onclick=async()=>{if(await saveTeam({...t,active:false},`ปิดทีม ${t.name} แล้ว`))closeForm()};
   setTimeout(()=>d.querySelector('input').focus(),50)}
 function closeForm(){$('#drawer').hidden=true;$('#drawer-bg').hidden=true}
