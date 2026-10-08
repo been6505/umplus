@@ -1,6 +1,7 @@
 /* HelpMe4U แอปทีม: เชื่อมลิงก์ทีมครั้งเดียว แล้วส่ง GPS ให้ศูนย์ (central.helpme4u.com/api/track/<รหัสทีม>)
    แบบเบื้องหลัง — ส่งต่อแม้ล็อกจอ (รูปแบบ OwnTracks ที่ศูนย์รองรับอยู่แล้ว) */
 const SERVER='https://central.helpme4u.com';
+const DASHBOARD=SERVER+'/central/dashboard/';
 const $=s=>document.querySelector(s);
 const C=window.Capacitor,NATIVE=!!(C&&C.isNativePlatform&&C.isNativePlatform());
 const P=n=>NATIVE&&C.registerPlugin?C.registerPlugin(n):null;
@@ -89,5 +90,24 @@ function render(){
   $('#hint').textContent=!NATIVE?'เปิดในแอปบนมือถือเพื่อส่งตำแหน่งเบื้องหลัง':T.watch?'มีแจ้งเตือนค้างไว้ระหว่างส่ง (Android) — อย่าปัดปิดแอปทิ้ง':'เปิดสวิตช์ แล้วอนุญาตตำแหน่งแบบ "ตลอดเวลา"';
   if(!T.watch&&!$('#st').classList.contains('bad'))setSt('',+st.get('hm_sent','0')?'ปิดอยู่ · ส่งล่าสุด '+hm(+st.get('hm_sent','0')):'ปิดอยู่');
 }
+/* ---------- ศูนย์ประสานงาน ----------
+   ปกติเปิดแดชบอร์ดเต็มจอในแอป (Android ปุ่มย้อนกลับ / iOS ปัดขอบซ้าย = กลับหน้านี้)
+   ถ้ากำลังส่งตำแหน่งทีมอยู่ เปิดในเบราว์เซอร์ในแอปแทน เพื่อไม่ให้การส่งตำแหน่งหยุด */
+function openCentral(){
+  if(T.watch&&Browser){Browser.open({url:DASHBOARD});return}
+  try{sessionStorage.setItem('hm_left','1')}catch(e){}
+  location.href=DASHBOARD;
+}
+$('#go-central').onclick=e=>{e.preventDefault();openCentral()};
+$('#remember-central').checked=st.get('hm_mode','')==='central';
+$('#remember-central').onchange=e=>st.set('hm_mode',e.target.checked?'central':'');
 render();
 if(tk()&&st.get('hm_on','')==='1')start(); // เปิดแอปใหม่ → ส่งต่อจากเดิม
+else{let back=false;try{back=sessionStorage.getItem('hm_left')==='1'}catch(e){}
+  if(!back&&st.get('hm_mode','')==='central')autoCentral();} // ย้อนกลับมาจากแดชบอร์ด → อยู่หน้านี้
+/* เปิดแอป → ไปแดชบอร์ดอัตโนมัติ มีเวลา 1.5 วิให้แตะ "อยู่หน้านี้" (ทางกลับมาหน้าแรกเสมอ) */
+function autoCentral(){
+  const bar=document.createElement('button');bar.type='button';bar.className='auto-bar';bar.textContent='กำลังเปิดศูนย์ประสานงาน… แตะเพื่ออยู่หน้านี้';
+  const t=setTimeout(()=>{bar.remove();openCentral()},1500);
+  bar.onclick=()=>{clearTimeout(t);bar.remove()};document.body.append(bar);
+}

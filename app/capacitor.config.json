@@ -13,5 +13,12 @@
     "CapacitorHttp": {
       "enabled": true
     }
+  },
+  "server": {
+    "allowNavigation": [
+      "central.helpme4u.com",
+      "helpme4u.com",
+      "*.helpme4u.com"
+    ]
   }
 }

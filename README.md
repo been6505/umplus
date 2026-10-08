@@ -38,6 +38,7 @@ Settings → Pages → Source: *Deploy from a branch* → เลือก branch
 - เชื่อมทีมครั้งเดียวด้วยลิงก์หน้าทีม `https://central.helpme4u.com/team/?id=<รหัสทีม>` (วางลิงก์ หรือเปิดลิงก์ `helpme4u://team?id=<รหัสทีม>`)
 - เปิดสวิตช์แล้วแอปส่ง GPS เบื้องหลังไปที่ `/api/track/<รหัสทีม>` (รูปแบบ OwnTracks ที่ศูนย์รองรับอยู่แล้ว) ส่งต่อแม้ล็อกจอ
 - ปุ่ม "เปิดหน้าทีม" เปิดหน้าทีมของศูนย์ในแอป
+- ปุ่ม "ศูนย์ประสานงาน" เปิดแดชบอร์ด `https://central.helpme4u.com/central/dashboard/` เต็มจอในแอป (Android ปุ่มย้อนกลับ / iOS ปัดขอบซ้าย = กลับหน้าแรก) ตั้งให้เปิดแดชบอร์ดทันทีเมื่อเปิดแอปได้
 - หน้าแอปอยู่ที่ `app/shell/` (HTML/JS ล้วน)
 
 Build บน cloud (GitHub Actions เมื่อแก้ไฟล์ใน `app/`):

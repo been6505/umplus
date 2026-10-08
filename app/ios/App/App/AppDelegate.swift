@@ -26,7 +26,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        // ปัดขอบจอซ้ายเพื่อย้อนกลับ (จากหน้าแดชบอร์ดศูนย์ กลับมาหน้าแรกของแอป)
+        (window?.rootViewController as? CAPBridgeViewController)?.webView?.allowsBackForwardNavigationGestures = true
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
