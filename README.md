@@ -34,7 +34,7 @@ Settings → Pages → Source: *Deploy from a branch* → เลือก branch
 
 ## แอปมือถือ HelpMe4U (`app/`)
 
-แอปทีมอาสาสำหรับศูนย์ **central.helpme4u.com** (Capacitor · `org.helpme4u`)
+แอปทีมอาสาสำหรับศูนย์ **central.helpme4u.com** (Capacitor · `com.helpme4u`)
 - เชื่อมทีมครั้งเดียวด้วยลิงก์หน้าทีม `https://central.helpme4u.com/team/?id=<รหัสทีม>` (วางลิงก์ หรือเปิดลิงก์ `helpme4u://team?id=<รหัสทีม>`)
 - เปิดสวิตช์แล้วแอปส่ง GPS เบื้องหลังไปที่ `/api/track/<รหัสทีม>` (รูปแบบ OwnTracks ที่ศูนย์รองรับอยู่แล้ว) ส่งต่อแม้ล็อกจอ
 - ปุ่ม "เปิดหน้าทีม" เปิดหน้าทีมของศูนย์ในแอป
@@ -43,6 +43,6 @@ Settings → Pages → Source: *Deploy from a branch* → เลือก branch
 Build บน cloud (GitHub Actions เมื่อแก้ไฟล์ใน `app/`):
 - **Android**: `App · Android APK` → แท็บ Actions → Artifacts
 - **iOS**: ทุก push build สำหรับ simulator · push tag `ios-<เลข>` เพื่อ build + อัปโหลด TestFlight
-  ต้องตั้ง Secrets: `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` และสร้างแอปใน App Store Connect ด้วย Bundle ID `org.helpme4u`
+  ต้องตั้ง Secrets: `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` และสร้างแอปใน App Store Connect ด้วย Bundle ID `com.helpme4u`
 
 ทดลองบนเครื่อง: `cd app && npm ci && npm run sync` แล้วเปิด `android/` ใน Android Studio หรือ `ios/App/App.xcworkspace` ใน Xcode

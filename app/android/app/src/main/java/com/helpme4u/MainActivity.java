@@ -1,4 +1,4 @@
-package org.helpme4u;
+package com.helpme4u;
 
 import com.getcapacitor.BridgeActivity;
 

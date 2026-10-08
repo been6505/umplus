@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">HelpMe4U</string>
     <string name="title_activity_main">HelpMe4U</string>
-    <string name="package_name">org.helpme4u</string>
-    <string name="custom_url_scheme">org.helpme4u</string>
+    <string name="package_name">com.helpme4u</string>
+    <string name="custom_url_scheme">com.helpme4u</string>
     <string name="capacitor_background_geolocation_notification_channel_name">ส่งตำแหน่งทีม</string>
 </resources>
