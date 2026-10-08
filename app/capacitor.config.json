@@ -1,0 +1,17 @@
+{
+  "appId": "org.ummatee.umplus",
+  "appName": "UM+",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "useLegacyBridge": true
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

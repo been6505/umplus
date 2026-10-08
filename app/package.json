@@ -1,0 +1,19 @@
+{
+  "name": "umplus-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "UM+ แอปมือถือ (Capacitor ห่อหน้าเว็บ UM+ เดิม + ตำแหน่งเบื้องหลัง)",
+  "scripts": {
+    "web": "node scripts/copy-web.mjs",
+    "sync": "npm run web && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.26",
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/core": "^7.6.9",
+    "@capacitor/ios": "^7.6.9"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.6.9"
+  }
+}

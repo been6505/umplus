@@ -1,0 +1,30 @@
+# สร้างแอป Android (APK) บน cloud ทุกครั้งที่ push — ดาวน์โหลดได้ที่แท็บ Actions → run ล่าสุด → Artifacts
+name: App · Android APK
+on:
+  push:
+    paths: ['app/**', '*.js', '*.css', '*.html', 'admin/**', 'assets/**', 'version.json', '.github/workflows/app-android.yml']
+  workflow_dispatch:
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - name: Web → Capacitor
+        working-directory: app
+        run: npm ci && npm run web && npx cap sync android
+      - name: Build APK
+        working-directory: app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug -PversionCode=${{ github.run_number }}
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/UMplus-${{ github.run_number }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: UMplus-android-${{ github.run_number }}
+          path: ${{ runner.temp }}/UMplus-${{ github.run_number }}.apk
+          retention-days: 30

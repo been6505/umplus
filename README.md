@@ -31,3 +31,15 @@ Settings → Pages → Source: *Deploy from a branch* → เลือก branch
 
 - ทุกหน้าเรียก Apps Script ตัวเดียวกัน (`API_URL` ใน `script.js`, `admin.js`, `admin/common.js`, `admin/dashboard/dashboard.js`) ถ้าเปลี่ยน URL ต้องแก้ทั้ง 4 ไฟล์
 - เมื่อแก้ไฟล์หน้าเว็บ ให้เพิ่มเลขใน `version.json`, `APP_VERSION` ใน `index.html` (ต้องตรงกับ `version.json` ไม่งั้นหน้าเว็บจะรีโหลดตัวเองวนไป) และ `CACHE` ใน `sw.js`
+
+## แอปมือถือ (`app/`)
+
+ห่อหน้าเว็บเดิมด้วย [Capacitor](https://capacitorjs.com) — แก้เว็บที่เดียวได้ทั้งเว็บและแอป
+ในแอป ตัวติดตามทีมใช้ตำแหน่งเบื้องหลังแบบ native จึงส่งตำแหน่งได้แม้ล็อกจอ
+
+- **Android**: ทุก push GitHub Actions (`App · Android APK`) จะสร้าง APK ให้ดาวน์โหลดที่แท็บ Actions → Artifacts
+- **iOS**: ทุก push จะ build สำหรับ simulator เพื่อตรวจว่าคอมไพล์ผ่าน · push tag `ios-<เลข>` เพื่อ build + อัปโหลด TestFlight
+  ต้องตั้ง Secrets ใน repo: `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`
+  และสร้างแอปใน App Store Connect ด้วย Bundle ID `org.ummatee.umplus` ก่อน
+
+ทดลองบนเครื่อง: `cd app && npm ci && npm run sync` แล้วเปิด `android/` ใน Android Studio หรือ `ios/App/App.xcworkspace` ใน Xcode

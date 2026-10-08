@@ -74,6 +74,9 @@ function notifyButton(label){
    1) ทีมอาสา: แชร์ตำแหน่งแบบเรียลไทม์
    ============================================================ */
 function isSharing(){return LIVE.watch!=null}
+/* ในแอป UM+ (Capacitor): ใช้ตำแหน่งเบื้องหลังแบบ native → ส่งต่อได้แม้ล็อกจอ/สลับแอป (เหมือน Traccar) */
+const IS_APP=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+const BGEO=IS_APP&&Capacitor.registerPlugin?Capacitor.registerPlugin('BackgroundGeolocation'):null;
 function distM(a,b){const R=6371000,r=Math.PI/180,x=Math.sin((b.lat-a.lat)*r/2),y=Math.sin((b.lng-a.lng)*r/2);return 2*R*Math.asin(Math.sqrt(x*x+Math.cos(a.lat*r)*Math.cos(b.lat*r)*y*y))}
 function startSharing(){
   if(!isVolunteer)return;
@@ -81,6 +84,14 @@ function startSharing(){
   if(!navigator.geolocation){toast({title:'อุปกรณ์นี้ไม่รองรับตำแหน่ง',tone:'warn'});return}
   if(isSharing())return;
   store.set('uh_sharing','1');
+  if(BGEO){
+    LIVE.watch='starting';
+    BGEO.addWatcher({backgroundTitle:'UM+ · ติดตามตำแหน่งทีม',backgroundMessage:'กำลังส่งตำแหน่งทีม '+store.get('uh_team','')+' ให้ศูนย์ประสานงาน',requestPermissions:true,stale:false,distanceFilter:30},(loc,err)=>{
+      if(err){if(err.code==='NOT_AUTHORIZED'){stopSharing(true);if(confirm('แอปยังไม่ได้รับสิทธิ์ใช้ตำแหน่ง เปิดหน้าตั้งค่าเพื่ออนุญาตไหม? (เลือก "ตลอดเวลา" เพื่อส่งได้แม้ล็อกจอ)'))BGEO.openSettings()}else trkLog('err','GPS: '+(err.message||err.code||''));return}
+      if(loc)onPos({coords:{latitude:loc.latitude,longitude:loc.longitude,accuracy:loc.accuracy,speed:loc.speed}});
+    }).then(id=>{if(LIVE.watch==='starting')LIVE.watch=id;else BGEO.removeWatcher({id})}).catch(()=>{LIVE.watch=null;store.set('uh_sharing','');refreshLiveControls()});
+    trkLog('info','เริ่มติดตาม (แอป · ส่งต่อแม้ล็อกจอ)');renderShareChip();refreshLiveControls();return;
+  }
   LIVE.watch=navigator.geolocation.watchPosition(onPos,err=>{
     if(err.code===1){stopSharing(true);toast({title:'ไม่ได้รับอนุญาตให้ใช้ตำแหน่ง',body:'เปิดสิทธิ์ตำแหน่งของเบราว์เซอร์ แล้วลองใหม่',tone:'warn'})}
   },{enableHighAccuracy:true,maximumAge:15000,timeout:30000});
@@ -88,7 +99,7 @@ function startSharing(){
   renderShareChip();refreshLiveControls();
 }
 async function stopSharing(silent){
-  if(LIVE.watch!=null){navigator.geolocation.clearWatch(LIVE.watch);LIVE.watch=null}
+  if(LIVE.watch!=null){if(BGEO){if(LIVE.watch!=='starting')BGEO.removeWatcher({id:LIVE.watch}).catch(()=>{})}else navigator.geolocation.clearWatch(LIVE.watch);LIVE.watch=null}
   store.set('uh_sharing','');LIVE.lastPos=null;LIVE.lastSent=0;LIVE.pending=null;wakeOff();trkLog('info','หยุดติดตาม');
   renderShareChip();refreshLiveControls();
   if(!silent)try{await apiPing({stop:true})}catch(e){}
@@ -145,7 +156,7 @@ async function sendSOS(){
   }catch(e){trkLog('err','ส่ง SOS ไม่สำเร็จ');toast({title:'ส่ง SOS ไม่สำเร็จ',body:'โทร 1669 หรือ 191 ทันที',tone:'danger',key:'sos',timeout:0})}
 }
 /* กันจอดับระหว่างติดตาม (Wake Lock) — เว็บส่งตำแหน่งได้เฉพาะตอนจอติด */
-async function wakeOn(){if(!isSharing()||!keepAwakeOn()||document.hidden||LIVE.wake||!('wakeLock' in navigator))return;
+async function wakeOn(){if(IS_APP||!isSharing()||!keepAwakeOn()||document.hidden||LIVE.wake||!('wakeLock' in navigator))return;
   try{LIVE.wake=await navigator.wakeLock.request('screen');LIVE.wake.addEventListener('release',()=>{LIVE.wake=null;renderTrkHead()});renderTrkHead()}catch(e){}}
 function wakeOff(){try{LIVE.wake&&LIVE.wake.release()}catch(e){}LIVE.wake=null}
 /* กลับมาที่หน้านี้ / กลับมาออนไลน์ → ส่งทันที + ขอกันจอดับใหม่ */
@@ -198,12 +209,12 @@ function fillLiveControls(box){
   const aw=document.createElement('label');aw.className='trk-opt';const awc=document.createElement('input');awc.type='checkbox';awc.checked=keepAwakeOn();
   awc.onchange=()=>{store.set('uh_trk_awake',awc.checked?'1':'0');if(awc.checked)wakeOn();else wakeOff();renderTrkHead()};aw.append(awc,' กันจอดับระหว่างติดตาม');
   const ph=document.createElement('label');ph.className='trk-opt';ph.append('เบอร์ติดต่อทีม (ใช้ตอนส่ง SOS)');const phi=document.createElement('input');phi.type='tel';phi.inputMode='tel';phi.className='team-input';phi.value=store.get('uh_trk_phone','');phi.onchange=()=>store.set('uh_trk_phone',phi.value.trim());ph.append(phi);
-  const note=document.createElement('p');note.className='trk-note';note.textContent='เว็บส่งตำแหน่งได้เมื่อเปิดหน้านี้ค้างไว้และจอติด (เปิด "กันจอดับ" และเสียบที่ชาร์จจะส่งได้ทั้งวัน) ถ้าต้องส่งตอนล็อกจอ ใช้ "แชร์ผ่าน Google Maps" ด้านล่างเพิ่ม';
-  set.append(fq,aw,ph,note);
+  const note=document.createElement('p');note.className='trk-note';note.textContent=IS_APP?'แอปส่งตำแหน่งต่อได้แม้ล็อกจอหรือสลับแอป (อนุญาตตำแหน่งแบบ "ตลอดเวลา" และไม่ปิดแอปทิ้ง) จะมีแจ้งเตือนค้างไว้ระหว่างติดตาม':'เว็บส่งตำแหน่งได้เมื่อเปิดหน้านี้ค้างไว้และจอติด (เปิด "กันจอดับ" และเสียบที่ชาร์จจะส่งได้ทั้งวัน) ถ้าต้องส่งตอนล็อกจอ ใช้ "แชร์ผ่าน Google Maps" ด้านล่างเพิ่ม';
+  set.append(fq,...(IS_APP?[]:[aw]),ph,note);
   card.append(head,sw,row,log,set);
   box.append(h,team,card);
   renderTrkHead();renderTrkLog();
-  box.append(gmBox());
+  if(!IS_APP)box.append(gmBox()); // ในแอปไม่ต้องใช้ Google Maps (แอปส่งตำแหน่งได้แม้ล็อกจอเอง)
   const nb=notifyButton('🔔 เปิดแจ้งเตือนเคสใหม่');if(nb)box.append(nb);
 }
 function renderTrkHead(){const el=document.getElementById('trk-head');if(!el)return;
