@@ -6,6 +6,7 @@ name: App · iOS
 on:
   push:
     paths: ['app/**', '*.js', '*.css', '*.html', 'admin/**', 'assets/**', 'version.json', '.github/workflows/app-ios.yml']
+    branches: ['**']
     tags: ['ios-*']
   workflow_dispatch:
 jobs:
