@@ -32,14 +32,17 @@ Settings → Pages → Source: *Deploy from a branch* → เลือก branch
 - ทุกหน้าเรียก Apps Script ตัวเดียวกัน (`API_URL` ใน `script.js`, `admin.js`, `admin/common.js`, `admin/dashboard/dashboard.js`) ถ้าเปลี่ยน URL ต้องแก้ทั้ง 4 ไฟล์
 - เมื่อแก้ไฟล์หน้าเว็บ ให้เพิ่มเลขใน `version.json`, `APP_VERSION` ใน `index.html` (ต้องตรงกับ `version.json` ไม่งั้นหน้าเว็บจะรีโหลดตัวเองวนไป) และ `CACHE` ใน `sw.js`
 
-## แอปมือถือ (`app/`)
+## แอปมือถือ HelpMe4U (`app/`)
 
-ห่อหน้าเว็บเดิมด้วย [Capacitor](https://capacitorjs.com) — แก้เว็บที่เดียวได้ทั้งเว็บและแอป
-ในแอป ตัวติดตามทีมใช้ตำแหน่งเบื้องหลังแบบ native จึงส่งตำแหน่งได้แม้ล็อกจอ
+แอปทีมอาสาสำหรับศูนย์ **central.helpme4u.com** (Capacitor · `org.helpme4u`)
+- เชื่อมทีมครั้งเดียวด้วยลิงก์หน้าทีม `https://central.helpme4u.com/team/?id=<รหัสทีม>` (วางลิงก์ หรือเปิดลิงก์ `helpme4u://team?id=<รหัสทีม>`)
+- เปิดสวิตช์แล้วแอปส่ง GPS เบื้องหลังไปที่ `/api/track/<รหัสทีม>` (รูปแบบ OwnTracks ที่ศูนย์รองรับอยู่แล้ว) ส่งต่อแม้ล็อกจอ
+- ปุ่ม "เปิดหน้าทีม" เปิดหน้าทีมของศูนย์ในแอป
+- หน้าแอปอยู่ที่ `app/shell/` (HTML/JS ล้วน)
 
-- **Android**: ทุก push GitHub Actions (`App · Android APK`) จะสร้าง APK ให้ดาวน์โหลดที่แท็บ Actions → Artifacts
-- **iOS**: ทุก push จะ build สำหรับ simulator เพื่อตรวจว่าคอมไพล์ผ่าน · push tag `ios-<เลข>` เพื่อ build + อัปโหลด TestFlight
-  ต้องตั้ง Secrets ใน repo: `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`
-  และสร้างแอปใน App Store Connect ด้วย Bundle ID `org.helpme4u` ก่อน
+Build บน cloud (GitHub Actions เมื่อแก้ไฟล์ใน `app/`):
+- **Android**: `App · Android APK` → แท็บ Actions → Artifacts
+- **iOS**: ทุก push build สำหรับ simulator · push tag `ios-<เลข>` เพื่อ build + อัปโหลด TestFlight
+  ต้องตั้ง Secrets: `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` และสร้างแอปใน App Store Connect ด้วย Bundle ID `org.helpme4u`
 
 ทดลองบนเครื่อง: `cd app && npm ci && npm run sync` แล้วเปิด `android/` ใน Android Studio หรือ `ios/App/App.xcworkspace` ใน Xcode

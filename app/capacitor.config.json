@@ -1,6 +1,6 @@
 {
   "appId": "org.helpme4u",
-  "appName": "UM+",
+  "appName": "HelpMe4U",
   "webDir": "www",
   "android": {
     "allowMixedContent": false,

@@ -2,10 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>helpme4u</string>
+			</array>
+		</dict>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>UM+ ใช้ตำแหน่งเพื่อปักหมุดจุดขอความช่วยเหลือ และส่งตำแหน่งทีมอาสาให้ศูนย์ประสานงาน</string>
+	<string>HelpMe4U ส่งตำแหน่งทีมอาสาให้ศูนย์ประสานงาน เพื่อจัดทีมที่อยู่ใกล้ผู้ประสบภัยที่สุด</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>ทีมอาสาที่เปิด "ติดตามอย่างต่อเนื่อง" จะส่งตำแหน่งให้ศูนย์ประสานงานต่อเนื่องแม้ล็อกจอ เพื่อจัดทีมที่อยู่ใกล้ผู้ประสบภัยที่สุด</string>
 	<key>UIBackgroundModes</key>
@@ -15,7 +24,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>UM+</string>
+        <string>HelpMe4U</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
