@@ -1,4 +1,4 @@
-package org.ummatee.umplus;
+package org.helpme4u;
 
 import com.getcapacitor.BridgeActivity;
 

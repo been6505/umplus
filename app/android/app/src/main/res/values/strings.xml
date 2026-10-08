@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">UM+</string>
     <string name="title_activity_main">UM+</string>
-    <string name="package_name">org.ummatee.umplus</string>
-    <string name="custom_url_scheme">org.ummatee.umplus</string>
+    <string name="package_name">org.helpme4u</string>
+    <string name="custom_url_scheme">org.helpme4u</string>
     <string name="capacitor_background_geolocation_notification_channel_name">ส่งตำแหน่งทีม</string>
 </resources>

@@ -40,6 +40,6 @@ Settings → Pages → Source: *Deploy from a branch* → เลือก branch
 - **Android**: ทุก push GitHub Actions (`App · Android APK`) จะสร้าง APK ให้ดาวน์โหลดที่แท็บ Actions → Artifacts
 - **iOS**: ทุก push จะ build สำหรับ simulator เพื่อตรวจว่าคอมไพล์ผ่าน · push tag `ios-<เลข>` เพื่อ build + อัปโหลด TestFlight
   ต้องตั้ง Secrets ใน repo: `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`
-  และสร้างแอปใน App Store Connect ด้วย Bundle ID `org.ummatee.umplus` ก่อน
+  และสร้างแอปใน App Store Connect ด้วย Bundle ID `org.helpme4u` ก่อน
 
 ทดลองบนเครื่อง: `cd app && npm ci && npm run sync` แล้วเปิด `android/` ใน Android Studio หรือ `ios/App/App.xcworkspace` ใน Xcode
