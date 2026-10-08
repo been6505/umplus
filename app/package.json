@@ -1,8 +1,8 @@
 {
-  "name": "umplus-app",
+  "name": "helpme4u-app",
   "private": true,
   "version": "1.0.0",
-  "description": "UM+ แอปมือถือ (Capacitor ห่อหน้าเว็บ UM+ เดิม + ตำแหน่งเบื้องหลัง)",
+  "description": "HelpMe4U แอปทีมอาสา — ส่งตำแหน่งทีมให้ศูนย์ central.helpme4u.com แบบเบื้องหลัง",
   "scripts": {
     "web": "node scripts/copy-web.mjs",
     "sync": "npm run web && npx cap sync"

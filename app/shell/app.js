@@ -14,19 +14,18 @@ function tokenFrom(text){
   const m=s.match(/[?&#](?:id|t|tk)=([A-Za-z0-9]{10,64})/)||s.match(/\/api\/track\/([A-Za-z0-9]{10,64})/)||s.match(/^([A-Za-z0-9]{10,64})$/);
   if(m)id=m[1];return id.toLowerCase();
 }
-function serverFrom(text){const m=String(text||'').match(/https:\/\/([a-z0-9.-]*helpme4u\.com|[a-z0-9-]+\.pages\.dev|admin\.um\.help)\b/i);return m?'https://'+m[1].toLowerCase():''}
 const tk=()=>st.get('hm_tk','');
-const srv=()=>{const s=st.get('hm_srv','');return /helpme4u\.com$/.test(s.replace('https://',''))||!s?SERVER:s};
+const srv=()=>SERVER;
 function link(text){
   const id=tokenFrom(text);
   if(!id){$('#link-err').textContent='ไม่พบรหัสทีมในลิงก์ — ขอลิงก์หน้าทีม (…/team/?id=…) จากศูนย์';return false}
-  st.set('hm_tk',id);st.set('hm_srv',serverFrom(text)||SERVER);$('#link-err').textContent='';render();log('info','เชื่อมทีมแล้ว');
+  st.set('hm_tk',id);$('#link-err').textContent='';render();log('info','เชื่อมทีมแล้ว');
   return true;
 }
 $('#link-go').onclick=()=>link($('#link-in').value);
 $('#link-in').addEventListener('input',e=>{if(tokenFrom(e.target.value))link(e.target.value)});
 $('#paste').onclick=async()=>{try{const t=await navigator.clipboard.readText();if(!link(t))$('#link-in').value=t}catch(e){$('#link-err').textContent='อ่านคลิปบอร์ดไม่ได้ — กดค้างในช่องด้านล่างแล้วเลือก "วาง"';$('#link-in').focus()}};
-$('#unlink').onclick=async()=>{if(!confirm('เลิกเชื่อมทีมนี้และหยุดส่งตำแหน่ง?'))return;await stop();st.set('hm_tk','');st.set('hm_srv','');render()};
+$('#unlink').onclick=async()=>{if(!confirm('เลิกเชื่อมทีมนี้และหยุดส่งตำแหน่ง?'))return;await stop();st.set('hm_tk','');render()};
 /* เปิดจากลิงก์ helpme4u://team?id=… หรือ https://central.helpme4u.com/team/?id=… */
 if(App)App.addListener('appUrlOpen',e=>{if(tokenFrom(e.url)){const had=tk();link(e.url);if(!had&&!T.watch)ask()}});
 
