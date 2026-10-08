@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HelpMe4U · ไม่มีอินเทอร์เน็ต</title>
+<style>
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:#102f42;color:#fff;font:16px/1.6 system-ui,-apple-system,"Noto Sans Thai",sans-serif}
+main{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;box-sizing:border-box;text-align:center}
+h1{font-size:22px;margin:0}p{margin:0;color:#b9d2db;max-width:320px}
+button{min-height:52px;min-width:200px;border:0;border-radius:14px;background:#3aa7a0;color:#fff;font:inherit;font-weight:700}
+a{color:#fff;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+  <div style="font-size:48px" aria-hidden="true">📡</div>
+  <h1>เชื่อมต่อศูนย์ไม่ได้</h1>
+  <p>ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่ แอปจะลองเชื่อมต่อเองเมื่อกลับมาออนไลน์</p>
+  <button id="retry" type="button">ลองใหม่</button>
+  <p>เหตุฉุกเฉินโทร <a href="tel:1669">1669</a> · <a href="tel:191">191</a></p>
+</main>
+<script>
+const go=()=>location.replace('https://central.helpme4u.com/');
+document.getElementById('retry').onclick=go;
+addEventListener('online',go);
+</script>
+</body>
+</html>

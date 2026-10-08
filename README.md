@@ -34,16 +34,29 @@ Settings → Pages → Source: *Deploy from a branch* → เลือก branch
 
 ## แอปมือถือ HelpMe4U (`app/`)
 
-แอปทีมอาสาสำหรับศูนย์ **central.helpme4u.com** (Capacitor · `com.helpme4u`)
-- เชื่อมทีมครั้งเดียวด้วยลิงก์หน้าทีม `https://central.helpme4u.com/team/?id=<รหัสทีม>` (วางลิงก์ หรือเปิดลิงก์ `helpme4u://team?id=<รหัสทีม>`)
-- เปิดสวิตช์แล้วแอปส่ง GPS เบื้องหลังไปที่ `/api/track/<รหัสทีม>` (รูปแบบ OwnTracks ที่ศูนย์รองรับอยู่แล้ว) ส่งต่อแม้ล็อกจอ
-- ปุ่ม "เปิดหน้าทีม" เปิดหน้าทีมของศูนย์ในแอป
-- ปุ่ม "ศูนย์ประสานงาน" เปิดแดชบอร์ด `https://central.helpme4u.com/central/dashboard/` เต็มจอในแอป (Android ปุ่มย้อนกลับ / iOS ปัดขอบซ้าย = กลับหน้าแรก) ตั้งให้เปิดแดชบอร์ดทันทีเมื่อเปิดแอปได้
-- หน้าแอปอยู่ที่ `app/shell/` (HTML/JS ล้วน)
+แอปคือเว็บ **https://central.helpme4u.com** ทั้งเว็บ (Capacitor `server.url`, Bundle ID `com.helpme4u`)
+- เปิดแอป = เปิด central.helpme4u.com เหมือนเว็บ 100% แก้เว็บแล้วแอปเปลี่ยนตามทันที ไม่ต้อง build ใหม่
+- ไม่มีอินเทอร์เน็ต → หน้า `app/shell/error.html` (ลองใหม่ / เชื่อมต่อเองเมื่อกลับมาออนไลน์)
+- ลิงก์ไปเว็บอื่น (เช่น Google Maps นำทาง) เปิดนอกแอป · iOS ปัดขอบซ้ายเพื่อย้อนกลับ
 
-Build บน cloud (GitHub Actions เมื่อแก้ไฟล์ใน `app/`):
+### ส่งตำแหน่งเบื้องหลังจากหน้าเว็บ central (เมื่ออยู่ในแอป)
+แอปมีปลั๊กอินตำแหน่งเบื้องหลังติดตั้งไว้แล้ว หน้าทีมของ central เรียกใช้ได้ (ส่งต่อแม้ล็อกจอ) เช่น
+
+```js
+const C = window.Capacitor;
+if (C && C.isNativePlatform && C.isNativePlatform()) {
+  const BG = C.registerPlugin('BackgroundGeolocation');
+  await BG.addWatcher({ backgroundTitle: 'HelpMe4U', backgroundMessage: 'กำลังส่งตำแหน่งทีมให้ศูนย์',
+      requestPermissions: true, stale: false, distanceFilter: 30 }, (loc, err) => {
+    if (!loc) return;
+    fetch('/api/track/' + TEAM_TOKEN, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _type: 'location', lat: loc.latitude, lon: loc.longitude, acc: Math.round(loc.accuracy), tst: Math.floor(loc.time / 1000) }) });
+  });
+}
+```
+(`fetch` ในแอปวิ่งผ่าน native HTTP จึงไม่ถูกหน่วงตอนแอปอยู่เบื้องหลัง)
+
+### Build บน cloud (GitHub Actions เมื่อแก้ไฟล์ใน `app/`)
 - **Android**: `App · Android APK` → แท็บ Actions → Artifacts
 - **iOS**: ทุก push build สำหรับ simulator · push tag `ios-<เลข>` เพื่อ build + อัปโหลด TestFlight
   ต้องตั้ง Secrets: `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` และสร้างแอปใน App Store Connect ด้วย Bundle ID `com.helpme4u`
-
-ทดลองบนเครื่อง: `cd app && npm ci && npm run sync` แล้วเปิด `android/` ใน Android Studio หรือ `ios/App/App.xcworkspace` ใน Xcode

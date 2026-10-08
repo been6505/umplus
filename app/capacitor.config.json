@@ -15,10 +15,12 @@
     }
   },
   "server": {
+    "url": "https://central.helpme4u.com",
     "allowNavigation": [
       "central.helpme4u.com",
       "helpme4u.com",
       "*.helpme4u.com"
-    ]
+    ],
+    "errorPath": "error.html"
   }
 }
